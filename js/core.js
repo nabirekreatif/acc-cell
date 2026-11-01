@@ -8,7 +8,7 @@
   const CFG = window.ACC_CONFIG || {};
   const GAS_URL = String(CFG.GAS_URL || '').trim();
   const LS = 'acc:v1:';
-  const App = window.App = { cfg: CFG, gas: GAS_URL, demo: !GAS_URL, pub: null, admin: null, pages: {}, cur: '', dirty: {} };
+  const App = window.App = { mode: window.ACC_MODE === 'admin' ? 'admin' : 'public', base: window.ACC_MODE === 'admin' ? '../' : '', cfg: CFG, gas: GAS_URL, demo: !GAS_URL, pub: null, admin: null, pages: {}, cur: '', dirty: {} };
 
   /* ---------------- util ---------------- */
   const $ = (s, r) => (r || document).querySelector(s);
@@ -20,11 +20,35 @@
   const hp62 = v => { const s = hp08(v); return s ? '62' + s.slice(1) : ''; };
   const hashStr = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h + ':' + s.length; };
   const debounce = (fn, ms) => { let t; return function () { const a = arguments; clearTimeout(t); t = setTimeout(() => fn.apply(this, a), ms); }; };
-  const img = (u, w) => { u = String(u || ''); if (/lh3\.googleusercontent\.com\/d\/[^=]+$/.test(u)) return u + '=w' + (w || 800); return u; };
+  const img = (u, w) => { u = String(u || ''); if (/lh3\.googleusercontent\.com\/d\/[^=]+$/.test(u)) return u + '=w' + (w || 800); if (u && window.ACC_MODE === 'admin' && !/^([a-z]+:|\/|data:|\.\.\/)/i.test(u)) return '../' + u; return u; };
   const cabNama = c => c === 'serui' ? 'Serui' : c === 'keduanya' ? 'Nabire & Serui' : c === 'semua' ? 'Semua' : 'Nabire';
   const tgl = iso => { if (!iso) return '-'; const d = new Date(iso); if (isNaN(d)) return String(iso); return d.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); };
   const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2);
   Object.assign(App, { $, $$, esc, I, rp, hp08, hp62, debounce, img, cabNama, tgl, uid, hashStr });
+
+  /* ---------------- ikon sosial media (SVG garis, jelas tanpa font) ---------------- */
+  const SVG = {
+    facebook: '<path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>',
+    instagram: '<rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/>',
+    youtube: '<path d="M2.5 17a24 24 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.6 49.6 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24 24 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.6 49.6 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/>',
+    tiktok: '<path d="M9 12a4 4 0 1 0 4 4V2a5 5 0 0 0 5 5"/>',
+    whatsapp: '<path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21"/><path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1"/>',
+    website: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+    shopee: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+    tokopedia: '<path d="m2 7 4.4-4.4A2 2 0 0 1 7.8 2h8.4a2 2 0 0 1 1.4.6L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M2 7h20v3a2 2 0 0 1-2 2 3 3 0 0 1-2-1 3 3 0 0 1-4 0 3 3 0 0 1-4 0 3 3 0 0 1-4 0 3 3 0 0 1-2 1 2 2 0 0 1-2-2z"/>'
+  };
+  const socIcon = k => '<svg class="si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (SVG[k] || SVG.website) + '</svg>';
+  App.socIcon = socIcon;
+  function sosmedList(s, gaya) {
+    return s.map(x => {
+      const k = String(x.platform || '').toLowerCase(), wa = x.url === '#wa' || (k === 'whatsapp' && !/^https?:/.test(x.url || ''));
+      const at = (wa ? 'href="#" data-wa-any' : 'href="' + esc(x.url) + '" target="_blank" rel="noopener"') + ' data-soc="' + esc(k) + '"';
+      return gaya === 'bulat'
+        ? '<a class="soc-r" ' + at + ' aria-label="' + esc(x.platform) + '"><span class="b">' + socIcon(k) + '</span><span class="l">' + esc(x.platform) + '</span></a>'
+        : '<a class="soc-btn" ' + at + '><span class="b">' + socIcon(k) + '</span><span class="grow"><b>' + esc(x.platform) + '</b>' + (x.label ? '<small>' + esc(x.label) + '</small>' : '') + '</span>' + I('arrow_forward') + '</a>';
+    }).join('');
+  }
+  App.sosmedList = sosmedList;
 
   /* ---------------- penyimpanan perangkat ---------------- */
   const Store = App.Store = {
@@ -100,6 +124,13 @@
     if (!fromCache || !GAS_URL) App.emit('pub');
   }
 
+  // halaman publik di tab lain ikut diperbarui saat admin menyimpan perubahan
+  addEventListener('storage', e => {
+    if (App.mode === 'admin' || e.key !== LS + 'pub') return;
+    const c = Store.get('pub', null);
+    if (c && c.data && c.t) { if (A_hash(c.data) !== A_hash(App.pub)) setPub(c.data, true); } else if (c) App.loadPublic(true);
+  });
+  const A_hash = d => hashStr(JSON.stringify(d || null));
   /* ---------------- event kecil ---------------- */
   const ev = {};
   App.on = (n, f) => (ev[n] = ev[n] || []).push(f);
@@ -122,8 +153,10 @@
   function route() {
     let raw = location.hash.replace(/^#\/?/, '');
     if (/^key\/?$/i.test(raw)) return;                       // menu lisensi (#key) — biarkan halaman saat ini
-    const parts = raw.split('/'), name = App.pages[parts[0]] ? parts[0] : (parts[0] === '' ? 'bio' : 'bio');
-    const param = parts.slice(1).map(decodeURIComponent).join('/');
+    const parts = raw.split('/');
+    let name, param;
+    if (App.mode === 'admin') { name = 'admin'; param = decodeURIComponent(parts[0] || ''); }
+    else { name = App.pages[parts[0]] && !App.pages[parts[0]].admin ? parts[0] : 'bio'; param = parts.slice(1).map(decodeURIComponent).join('/'); }
     const prev = App.cur, def = App.pages[name];
     App._navCount++;
     const el = pageEl(name);
@@ -136,7 +169,7 @@
     if (def.render) def.render(el, param, false, changed);
     App.dirty[name] = false;
     $$('[data-nav]').forEach(a => a.classList.toggle('on', a.dataset.nav === (def.nav || name)));
-    $('#pubnav').hidden = !!def.admin;
+    const pn = $('#pubnav'); if (pn) pn.hidden = !!def.admin;
     if (changed && !def.keepScroll) App.scrollY(0);
     if (def.title) document.title = def.title(param) + ' — ' + ((App.pub && App.pub.settings && App.pub.settings.nama_toko) || 'Acc Cell');
     App.emit('route', name);
@@ -202,7 +235,7 @@
   /* ---------------- statistik (batch, tanpa menunggu) ---------------- */
   let q = [], qt = null;
   App.track = function (j, p, c) {
-    if (!GAS_URL || App.cur === 'admin') return;
+    if (!GAS_URL || App.mode === 'admin') return;
     q.push({ j, p: p || '', c: c || '' });
     clearTimeout(qt); qt = setTimeout(flushTrack, q.length >= 10 ? 0 : 4000);
   };
@@ -222,7 +255,7 @@
   const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
   function pwaDone() { Store.set(PWA_KEY, Date.now()); const b = $('#pwa'); if (b) b.remove(); }
   function showPwa(ios) {
-    if (isStandalone() || Store.get(PWA_KEY, 0) || $('#pwa') || App.cur === 'admin') return;
+    if (isStandalone() || Store.get(PWA_KEY, 0) || $('#pwa') || App.mode === 'admin') return;
     const b = document.createElement('div'); b.id = 'pwa'; b.className = 'pwa'; b.setAttribute('role', 'dialog');
     b.innerHTML = '<img src="assets/icon-192.png" alt=""><div class="grow"><b>Pasang Aplikasi Acc Cell</b><span>' +
       (ios ? 'Ketuk ' + I('ios_share') + ' Bagikan lalu “Tambah ke Layar Utama”.' : 'Buka katalog & rekening resmi lebih cepat, langsung dari layar HP.') + '</span></div>' +
@@ -236,7 +269,7 @@
   addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; setTimeout(() => showPwa(false), 2500); });
   addEventListener('appinstalled', pwaDone);
   App.on('route', n => { const b = $('#pwa'); if (b) b.hidden = n === 'admin'; });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
+  if ('serviceWorker' in navigator && location.protocol === 'https:' && window.ACC_MODE !== 'admin') addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
 
   /* ---------------- bilah lisensi: geser elemen bawah agar tidak tertutup ---------------- */
   function measureNk() {
@@ -269,7 +302,7 @@
     route();
     App.loadPublic();
     App.warmUp();
-    App.track('kunjungan');
+    if (App.mode !== 'admin') App.track('kunjungan');
     if (Store.ss('visit') !== '1') { Store.ss('visit', '1'); }
     if (isIOS() && !isStandalone()) setTimeout(() => showPwa(true), 4000);
     document.addEventListener('visibilitychange', () => {
@@ -277,6 +310,7 @@
       else App._hiddenAt = Date.now();
     });
     if (window.NKLicense && NKLicense.ready) NKLicense.ready.then(() => { refreshCopy(); setTimeout(measureNk, 300); });
+    addEventListener('nkl:status', () => { refreshCopy(); setTimeout(measureNk, 100); });
     refreshCopy();
     setTimeout(measureNk, 900); setInterval(measureNk, 2500); addEventListener('resize', debounce(measureNk, 200));
   };

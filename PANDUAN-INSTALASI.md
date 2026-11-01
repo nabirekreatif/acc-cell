@@ -16,6 +16,7 @@ Frontend (GitHub Pages) ⇄ Google Apps Script (REST API) + Google Sheets + Goog
 | `appsscript.json` | Manifest backend (zona waktu Jayapura + izin akses). |
 | `PANDUAN-INSTALASI.md` | Panduan ini. |
 | `nk-protect.js` | Khusus penjual (Nabire Kreatif), untuk menyegel ulang bila template diedit. |
+| `nk-license-v4.1-footer.js` | Khusus penjual: SDK lisensi versi "mode footer" (belum disegel) untuk menggantikan SDK induk di admin Nabire Kreatif. |
 
 ---
 
@@ -94,14 +95,18 @@ Bila yang tampil masih versi lama, tekan **Ctrl+Shift+R**.
 
 ## 4. Langkah pertama setelah online
 
-1. Buka `…/#/admin`, lalu login sebagai `superadmin` dengan sandi dari Log. Anda akan diminta mengganti sandi.
+1. Buka **halaman admin tersendiri**: `https://USERNAME.github.io/acc-cell/admin/`. Halaman ini tidak ditautkan dari halaman publik, jadi **simpan sebagai bookmark**. Login sebagai `superadmin` dengan sandi dari Log, lalu ganti sandi saat diminta.
 2. **Rekening & QRIS** → ganti semua data **CONTOH** dengan rekening dan QRIS asli toko. Unggah gambar QRIS asli. Ini penting untuk mencegah penipuan.
 3. **Cabang & Sosmed** → periksa alamat, nomor WA admin (Nabire 082197649558, Serui 081248245606), dan link Google Maps. Untuk peta mini: Google Maps → Bagikan → Sematkan peta → Salin HTML → tempel.
 4. **Admin & Akses** → buat akun **admin_nabire** dan **admin_serui** (isi nomor WA agar ikut menerima notifikasi). Admin cabang hanya bisa mengelola produk cabangnya sendiri.
 5. **Produk** → hapus produk contoh atau ganti dengan foto asli. Foto otomatis dikompres sebelum diunggah ke Drive.
-6. **Profil & Urutan** → atur nama, tagline, kartu promo, dan urutan bagian link bio.
+6. **Profil & Urutan** → setiap bagian link bio (Profil, Slide Hero, Kartu Promo, Tombol Menu, **Slide Produk Pilihan**, Sosial Media, Cabang) bisa digeser naik/turun dengan ▲▼, dinyalakan/dimatikan dengan saklar, dan diubah isinya lewat tombol **Atur**. Klik **Simpan Urutan** setelah mengubah urutan.
+   - **Slide Produk Pilihan** menampilkan produk acak (yang tersedia) yang bisa digeser, plus tombol **Lihat semua**. Judul dan jumlahnya diatur lewat **Atur**.
+   - **Sosial media** punya 2 gaya: **Tombol lebar** atau **Ikon bulat**. Pilih di **Cabang & Sosmed**, atau lewat **Atur** pada bagian Sosial Media.
 7. **Pop-up Promo** dan **Slide Hero** → atur promo. Pop-up bisa dinyalakan atau dimatikan kapan saja.
 8. Pasang link website di bio TikTok, Instagram, Facebook, dan WhatsApp Business.
+
+> Di halaman publik, tombol **Menu** (navigasi bawah) membuka semua menu untuk pengunjung: Beranda, Semua Produk, HP Baru, HP Second, Aksesoris, Rekening & QRIS, Servis & Tukar Tambah, Chat Admin, Bagikan, dan sosial media. Katalog punya tombol **Filter** (lokasi toko, kategori, urutan harga/terbaru, sembunyikan stok habis).
 
 ---
 
@@ -161,7 +166,7 @@ Dasbor → **Migrasi Data** → tempel URL spreadsheet lama → pilih data → *
 
 - Domain yang belum berlisensi tampil dalam **mode DEMO**: ada pita "DEMO" dan bilah *Beli Lisensi / Aktifkan Lisensi*. Semua fitur tetap berjalan.
 - Cara aktivasi: buka **`domain-anda/#key`** atau dasbor → menu **Lisensi**, lalu masukkan kode `NK-XXXX-XXXX`. Cukup **sekali per domain**; setelah itu semua pengunjung tidak diminta kode lagi.
-- Setelah berlisensi, footer berubah menjadi **"© 2026 Acc Cell. by Nabirekreatif.com"** (nama diambil dari `NAMA_USAHA` di `config.js`).
+- Setelah berlisensi, **pita DEMO dan bilah melayang di bawah hilang**. Hak cipta pindah ke footer: **"© 2026 Acc Cell. by Nabirekreatif.com"** (nama diambil dari `NAMA_USAHA` di `config.js`). Footer ini dijaga: bila disembunyikan atau teksnya diubah, halaman terkunci.
 - **Jangan** mengubah berkas selain `js/config.js`, dan jangan menghapus atau menutupi hak cipta. Halaman akan **terkunci**.
 - Wajib HTTPS (GitHub Pages sudah HTTPS). Bila memakai Cloudflare, matikan *Auto Minify* dan *Rocket Loader* karena bisa memicu kunci yang keliru.
 

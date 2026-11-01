@@ -32,10 +32,12 @@
     if (c && !force && Date.now() - c.t < 60000) return true;
     const r = await A.api('adminBoot');
     if (r.success) { const changed = !A.admin || A.hashStr(JSON.stringify(r.data)) !== A.hashStr(JSON.stringify(A.admin)); setBoot(r.data); if (changed && shellBuilt) show(view, true); return true; }
+    if (!A.admin && shellBuilt) show(view);
     if (!A.admin) A.toast(r.message, 'err');
     return false;
   }
-  const refreshPublic = () => setTimeout(() => A.loadPublic(true), 200);
+  // tandai cache publik basi seketika (tab/halaman publik lain langsung mengambil data baru), lalu segarkan
+  const refreshPublic = () => { const c = Store.get('pub', null); if (c) { c.t = 0; Store.set('pub', c); } setTimeout(() => A.loadPublic(true), 150); };
 
   /* ---------------- menu ---------------- */
   const MENU = [
@@ -61,7 +63,7 @@
 
   A.page('admin', {
     admin: true, nav: 'admin', title: () => 'Dasbor Admin',
-    render(e, sub) { el = e; render(e, sub); }
+    render(e, sub, rerender) { el = e; if (rerender && shellBuilt) return; render(e, sub); }
   });
 
   function render(e, sub) {
@@ -70,24 +72,25 @@
     if (A.mustChange) { shellBuilt = false; return renderMustChange(e); }
     view = allowed(sub) ? sub : 'beranda';
     if (!shellBuilt) buildShell(e);
+    if (!A.admin) { const c = Store.get(bootKey(), null); if (c) A.admin = c.data; }   // tampil seketika dari cache perangkat
     show(view);
     loadBoot();
   }
 
   /* ---------------- belum terhubung (mode demo) ---------------- */
   function renderSetup(e) {
-    e.innerHTML = '<div class="login-wrap"><div class="card login-card"><img class="logo" src="assets/logo.png" alt=""><h2 class="center">Dasbor Admin Acc Cell</h2>' +
+    e.innerHTML = '<div class="login-wrap"><div class="card login-card"><img class="logo" src="' + A.base + 'assets/logo.png" alt=""><h2 class="center">Dasbor Admin Acc Cell</h2>' +
       '<div class="note amber mt16">' + I('settings') + '<div><b>Backend belum terhubung.</b> Dasbor memerlukan Google Apps Script.<ol style="margin:8px 0 0;padding-left:18px;line-height:20px"><li>Pasang backend (Kode.gs dkk.) lalu jalankan <span class="mono">setupAplikasi()</span>.</li><li>Deploy sebagai Web App (akses: Anyone) dan salin URL <span class="mono">/exec</span>.</li><li>Tempel di <span class="mono">js/config.js</span> → <span class="mono">GAS_URL</span>, lalu push ulang.</li></ol></div></div>' +
-      '<a class="btn btn-ghost btn-block mt16" href="#/">' + I('arrow_back') + 'Kembali ke Link Bio</a><button class="btn btn-soft btn-block mt8" data-nk-license>' + I('key') + 'Lisensi Template</button></div></div>';
+      '<a class="btn btn-ghost btn-block mt16" href="../">' + I('arrow_back') + 'Kembali ke Link Bio</a><button class="btn btn-soft btn-block mt8" data-nk-license>' + I('key') + 'Lisensi Template</button></div></div>';
   }
 
   /* ---------------- login ---------------- */
   function renderLogin(e) {
-    e.innerHTML = '<div class="login-wrap"><form class="card login-card f" autocomplete="on"><img class="logo" src="assets/logo.png" alt=""><div class="center"><h2 style="font:800 22px var(--f-head)">Masuk Dasbor</h2><p class="muted small" style="margin:4px 0 0">Superadmin &amp; Admin Cabang Acc Cell</p></div>' +
+    e.innerHTML = '<div class="login-wrap"><form class="card login-card f" autocomplete="on"><img class="logo" src="' + A.base + 'assets/logo.png" alt=""><div class="center"><h2 style="font:800 22px var(--f-head)">Masuk Dasbor</h2><p class="muted small" style="margin:4px 0 0">Superadmin &amp; Admin Cabang Acc Cell</p></div>' +
       '<div class="fld"><label for="lu">Username</label><input id="lu" name="username" autocomplete="username" autocapitalize="none" required></div>' +
       '<div class="fld"><label for="lp">Sandi</label><div style="position:relative"><input id="lp" name="password" type="password" autocomplete="current-password" required><button type="button" class="clr" data-eye style="position:absolute;right:6px;top:7px;width:34px;height:34px">' + I('visibility') + '</button></div></div>' +
       '<div class="small" style="color:var(--danger);min-height:16px" data-err></div><button class="btn btn-ink btn-block" data-go>' + I('login') + 'Masuk</button>' +
-      '<a class="btn btn-ghost btn-block" href="#/">' + I('arrow_back') + 'Kembali ke Link Bio</a><p class="muted tiny center" style="margin:0">Lupa sandi? Admin cabang: hubungi superadmin. Superadmin: jalankan <span class="mono">resetPasswordSuperadmin()</span> di editor Apps Script.</p></form></div>';
+      '<a class="btn btn-ghost btn-block" href="../">' + I('arrow_back') + 'Kembali ke Link Bio</a><p class="muted tiny center" style="margin:0">Lupa sandi? Admin cabang: hubungi superadmin. Superadmin: jalankan <span class="mono">resetPasswordSuperadmin()</span> di editor Apps Script.</p></form></div>';
     const f = e.querySelector('form'), err = e.querySelector('[data-err]'), go = e.querySelector('[data-go]');
     e.querySelector('[data-eye]').onclick = () => { const p = e.querySelector('#lp'); p.type = p.type === 'password' ? 'text' : 'password'; };
     f.onsubmit = async ev => {
@@ -122,18 +125,18 @@
   function buildShell(e) {
     const items = MENU.filter(m => m.g ? isSA() : (m.all || isSA()));
     e.innerHTML = '<div class="adm"><nav class="side" aria-label="Menu dasbor"><div class="row" style="padding:4px 10px 12px"><span class="avatar-i">' + esc((A.user.nama || 'A').slice(0, 1).toUpperCase()) + '</span><div class="grow"><b class="ell" style="display:block;font:700 14px var(--f-head)">' + esc(A.user.nama) + '</b><span class="muted tiny">' + (isSA() ? 'Superadmin' : 'Admin ' + cabNama(A.user.cabang)) + '</span></div></div>' +
-      items.map(m => m.g ? '<div class="grp">' + esc(m.g) + '</div>' : '<a href="#/admin/' + m.id + '" data-v="' + m.id + '">' + I(m.i) + esc(m.t) + '</a>').join('') +
-      '<div class="grp">Lainnya</div><button data-nk-license>' + I('key') + 'Lisensi</button><a href="#/" target="_blank">' + I('open_in_new') + 'Lihat Link Bio</a><button data-logout>' + I('logout') + 'Keluar</button></nav>' +
+      items.map(m => m.g ? '<div class="grp">' + esc(m.g) + '</div>' : '<a href="#/' + m.id + '" data-v="' + m.id + '">' + I(m.i) + esc(m.t) + '</a>').join('') +
+      '<div class="grp">Lainnya</div><button data-nk-license>' + I('key') + 'Lisensi</button><a href="../" target="_blank">' + I('open_in_new') + 'Lihat Link Bio</a><button data-logout>' + I('logout') + 'Keluar</button></nav>' +
       '<div class="adm-main" data-main></div></div>' +
       '<nav class="bnav adm-bnav" style="--n:' + (isSA() ? 5 : 4) + '"><div class="bnav-in">' +
       (isSA() ? [['beranda', 'Beranda', 'space_dashboard'], ['produk', 'Produk', 'smartphone'], ['tampilan', 'Tampilan', 'tune'], ['notif', 'WA Blast', 'forum']] : [['beranda', 'Beranda', 'space_dashboard'], ['produk', 'Produk', 'smartphone'], ['akun', 'Akun', 'person']])
-        .map(x => '<a href="#/admin/' + x[0] + '" data-v="' + x[0] + '">' + I(x[2]) + x[1] + '</a>').join('') +
+        .map(x => '<a href="#/' + x[0] + '" data-v="' + x[0] + '">' + I(x[2]) + x[1] + '</a>').join('') +
       '<a href="#" data-more>' + I('menu') + 'Menu</a></div></nav>';
     e.querySelector('[data-logout]').onclick = () => logout('Anda telah keluar.');
     e.querySelector('[data-more]').onclick = ev => {
       ev.preventDefault();
-      const o = A.sheet('<div class="menu-grid">' + items.filter(m => !m.g).map(m => '<a href="#/admin/' + m.id + '">' + I(m.i) + esc(m.t) + '</a>').join('') +
-        '<button data-nk-license>' + I('key') + 'Lisensi</button><a href="#/">' + I('home') + 'Link Bio</a><button data-lo>' + I('logout') + 'Keluar</button></div>', { title: 'Menu Dasbor' });
+      const o = A.sheet('<div class="menu-grid">' + items.filter(m => !m.g).map(m => '<a href="#/' + m.id + '">' + I(m.i) + esc(m.t) + '</a>').join('') +
+        '<button data-nk-license>' + I('key') + 'Lisensi</button><a href="../">' + I('home') + 'Link Bio</a><button data-lo>' + I('logout') + 'Keluar</button></div>', { title: 'Menu Dasbor' });
       o.addEventListener('click', ev2 => { if (ev2.target.closest('a')) o.close(); if (ev2.target.closest('[data-lo]')) { o.close(); logout('Anda telah keluar.'); } });
     };
     shellBuilt = true;
@@ -235,7 +238,7 @@
     const cnt = c => P.filter(p => p.cabang === c || p.cabang === 'keduanya').length;
     const habis = P.filter(p => p.status === 'Habis').length, tampil = P.filter(p => p.aktif).length;
     const s = B().settings || {};
-    m.innerHTML = head('Halo, ' + (A.user.nama || '').split(' ')[0] + ' 👋', '<a class="btn btn-amber btn-sm" href="#/admin/produk" data-add>' + I('add') + 'Tambah Produk</a>') +
+    m.innerHTML = head('Halo, ' + (A.user.nama || '').split(' ')[0] + ' 👋', '<a class="btn btn-amber btn-sm" href="#/produk" data-add>' + I('add') + 'Tambah Produk</a>') +
       '<div class="kpis">' +
       (sa ? '<div class="kpi click" data-k="nabire"><span>' + I('location_on') + 'Produk Nabire</span><b>' + cnt('nabire') + '</b><small>termasuk stok bersama</small></div><div class="kpi click" data-k="serui"><span>' + I('location_on') + 'Produk Serui</span><b>' + cnt('serui') + '</b><small>termasuk stok bersama</small></div>'
         : '<div class="kpi click" data-k="semua"><span>' + I('inventory_2') + 'Produk ' + cabNama(A.user.cabang) + '</span><b>' + P.filter(p => p.cabang === A.user.cabang).length + '</b><small>+ ' + P.filter(p => p.cabang === 'keduanya').length + ' stok bersama</small></div>') +
@@ -243,10 +246,10 @@
       (sa ? '<div class="kpi ' + (String(s.popup_aktif).toUpperCase() === 'YA' ? 'amber' : '') + ' click" data-go="popup"><span>' + I('campaign') + 'Pop-up Promo</span><b>' + (String(s.popup_aktif).toUpperCase() === 'YA' ? 'AKTIF' : 'OFF') + '</b><small>' + esc((B().banners || []).filter(b => b.aktif).length) + ' banner aktif</small></div>' : '') +
       '</div>' +
       '<div class="panel"><div class="panel-h"><h3>Statistik Pengunjung</h3><div class="seg" data-hari>' + [[7, '7 hari'], [30, '30 hari'], [90, '90 hari']].map(x => '<button data-h="' + x[0] + '"' + (x[0] === statHari ? ' class="on"' : '') + '>' + x[1] + '</button>').join('') + '</div></div><div data-stats><div class="skel" style="height:180px"></div></div></div>' +
-      (sa ? '<div class="menu-grid mt16">' + [['tampilan', 'tune', 'Atur urutan halaman'], ['banner', 'view_carousel', 'Ganti slide promo'], ['bayar', 'account_balance_wallet', 'Rekening & QRIS'], ['notif', 'forum', 'Blast WA promo'], ['crm', 'contacts', 'CRM pelanggan'], ['pengguna', 'manage_accounts', 'Admin cabang']].map(x => '<a href="#/admin/' + x[0] + '">' + I(x[1]) + x[2] + '</a>').join('') + '</div>' : '');
-    m.querySelectorAll('[data-k]').forEach(k => k.onclick = () => { prodFilter.cab = ['nabire', 'serui'].indexOf(k.dataset.k) > -1 ? k.dataset.k : ''; prodFilter.status = k.dataset.k === 'tersedia' ? '' : prodFilter.status; A.go('admin/produk'); });
-    m.querySelectorAll('[data-go]').forEach(k => k.onclick = () => A.go('admin/' + k.dataset.go));
-    m.querySelector('[data-add]').onclick = ev => { ev.preventDefault(); A.go('admin/produk'); setTimeout(() => productForm(), 50); };
+      (sa ? '<div class="menu-grid mt16">' + [['tampilan', 'tune', 'Atur urutan halaman'], ['banner', 'view_carousel', 'Ganti slide promo'], ['bayar', 'account_balance_wallet', 'Rekening & QRIS'], ['notif', 'forum', 'Blast WA promo'], ['crm', 'contacts', 'CRM pelanggan'], ['pengguna', 'manage_accounts', 'Admin cabang']].map(x => '<a href="#/' + x[0] + '">' + I(x[1]) + x[2] + '</a>').join('') + '</div>' : '');
+    m.querySelectorAll('[data-k]').forEach(k => k.onclick = () => { prodFilter.cab = ['nabire', 'serui'].indexOf(k.dataset.k) > -1 ? k.dataset.k : ''; prodFilter.status = k.dataset.k === 'tersedia' ? '' : prodFilter.status; A.go('produk'); });
+    m.querySelectorAll('[data-go]').forEach(k => k.onclick = () => A.go(k.dataset.go));
+    m.querySelector('[data-add]').onclick = ev => { ev.preventDefault(); A.go('produk'); setTimeout(() => productForm(), 50); };
     m.querySelector('[data-hari]').onclick = ev => { const b = ev.target.closest('[data-h]'); if (!b) return; statHari = +b.dataset.h; m.querySelectorAll('[data-h]').forEach(x => x.classList.toggle('on', x === b)); loadStats(m); };
     loadStats(m);
   };
@@ -285,7 +288,7 @@
     { k: 'aktif', t: 'Tampilkan di katalog', type: 'switch' }
   ];
   VIEWS.produk = function (m) {
-    m.innerHTML = head('Produk', '<button class="btn btn-amber btn-sm" data-add>' + I('add') + 'Tambah Produk</button>' + (isSA() ? '<a class="btn btn-ghost btn-sm" href="#/admin/migrasi">' + I('upload_file') + 'Import CSV</a>' : '')) +
+    m.innerHTML = head('Produk', '<button class="btn btn-amber btn-sm" data-add>' + I('add') + 'Tambah Produk</button>' + (isSA() ? '<a class="btn btn-ghost btn-sm" href="#/migrasi">' + I('upload_file') + 'Import CSV</a>' : '')) +
       '<div class="search" style="margin-top:0">' + I('search') + '<input type="search" placeholder="Cari nama, merek, RAM…" value="' + esc(prodFilter.q) + '" data-q></div>' +
       '<div class="pills mt12" data-f="kat">' + [['', 'Semua'], ['HP Baru', 'HP Baru'], ['HP Second', 'HP Second'], ['Aksesoris', 'Aksesoris']].map(x => '<button class="pill" data-v="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
       '<div class="pills mt8" data-f="status">' + [['', 'Semua status'], ['Tersedia', 'Tersedia'], ['Habis', 'Habis'], ['sembunyi', 'Disembunyikan']].map(x => '<button class="pill" data-v="' + x[0] + '">' + x[1] + '</button>').join('') +
@@ -381,30 +384,65 @@
     };
   }
 
-  /* ======================= TAMPILAN (profil + urutan) ======================= */
-  const SET_SPEC = [
-    { sec: 'Profil toko' }, { k: 'nama_toko', t: 'Nama toko', half: 1 }, { k: 'subjudul', t: 'Teks setelah nama', half: 1 },
-    { k: 'tagline', t: 'Tagline' }, { k: 'logo_url', t: 'Logo (kosong = logo bawaan)', type: 'image', folder: 'Logo' },
-    { k: 'warna_aksen', t: 'Warna aksen (hex)', half: 1, ph: '#F9B54C' }, { k: 'status_buka', t: 'Bilah jam buka', half: 1 },
-    { sec: 'Kartu promo di link bio' }, { k: 'pengumuman_aktif', t: 'Tampilkan kartu promo', type: 'switch', yaTidak: 1 },
-    { k: 'pengumuman_label', t: 'Label', half: 1 }, { k: 'pengumuman_judul', t: 'Judul', half: 1 }, { k: 'pengumuman_teks', t: 'Isi', type: 'textarea', rows: 2 },
-    { sec: 'Tombol menu & judul halaman' }, { k: 'menu_katalog_sub', t: 'Keterangan tombol Katalog' }, { k: 'menu_bayar_sub', t: 'Keterangan tombol Rekening' }, { k: 'menu_layanan_sub', t: 'Keterangan tombol Layanan' },
-    { k: 'katalog_judul', t: 'Judul katalog', half: 1 }, { k: 'katalog_sub', t: 'Subjudul katalog', half: 1 }, { k: 'layanan_judul', t: 'Judul layanan', half: 1 }, { k: 'layanan_sub', t: 'Subjudul layanan', half: 1 },
-    { sec: 'Footer & SEO' }, { k: 'jaminan', t: 'Baris jaminan', half: 1 }, { k: 'teks_footer', t: 'Teks footer', half: 1 }, { k: 'meta_deskripsi', t: 'Deskripsi untuk Google/WhatsApp', type: 'textarea', rows: 2 }
-  ];
+  /* ======================= TAMPILAN (urutan bagian + editor per bagian) ======================= */
+  const GAYA_SOS = [['tombol', 'Tombol lebar'], ['bulat', 'Ikon bulat']];
+  const SEC_INFO = {
+    profil: { i: 'account_circle', d: 'Logo, nama toko, tagline, jam buka', spec: [{ k: 'nama_toko', t: 'Nama toko' }, { k: 'tagline', t: 'Tagline' }, { k: 'logo_url', t: 'Logo (kosong = logo bawaan)', type: 'image', folder: 'Logo' }, { k: 'status_buka', t: 'Teks jam buka', ph: 'Buka Hari Ini (09.00 - 21.00 WIT)' }, { k: 'warna_aksen', t: 'Warna aksen (hex)', ph: '#F9B54C', hint: 'Bawaan amber logo: #F9B54C' }] },
+    hero: { i: 'view_carousel', d: 'Foto promo yang bergeser otomatis', link: 'banner', linkT: 'Kelola Slide Hero' },
+    promo: { i: 'redeem', d: 'Kartu promo/pengumuman', spec: [{ k: 'pengumuman_aktif', t: 'Tampilkan kartu promo', type: 'switch', yaTidak: 1 }, { k: 'pengumuman_label', t: 'Label kecil' }, { k: 'pengumuman_judul', t: 'Judul' }, { k: 'pengumuman_teks', t: 'Isi', type: 'textarea', rows: 2 }] },
+    menu: { i: 'apps', d: 'Tombol Katalog, Rekening, Layanan', spec: [{ k: 'menu_katalog_sub', t: 'Keterangan tombol Katalog' }, { k: 'menu_bayar_sub', t: 'Keterangan tombol Rekening & QRIS' }, { k: 'menu_layanan_sub', t: 'Keterangan tombol Jual/Tukar/Servis' }] },
+    produk: { i: 'view_week', d: 'Slide produk acak + tombol Lihat semua', spec: [{ k: 'produk_judul', t: 'Judul slide', ph: 'Produk Pilihan' }, { k: 'produk_jumlah', t: 'Jumlah produk (4–20)', type: 'select', opts: ['4', '6', '8', '10', '12', '16', '20'] }] },
+    sosmed: { i: 'public', d: 'Tautan TikTok, Instagram, Facebook, WhatsApp', spec: [{ k: 'sosmed_gaya', t: 'Gaya tampilan', type: 'select', opts: GAYA_SOS }], link: 'cabang', linkT: 'Kelola tautan sosial media' },
+    cabang: { i: 'storefront', d: 'Alamat, jam buka, peta & WA cabang', link: 'cabang', linkT: 'Kelola data cabang' }
+  };
+  const PAGE_SPEC = [{ k: 'katalog_judul', t: 'Judul katalog', half: 1 }, { k: 'katalog_sub', t: 'Subjudul katalog', half: 1 }, { k: 'layanan_judul', t: 'Judul halaman layanan', half: 1 }, { k: 'layanan_sub', t: 'Subjudul layanan', half: 1 },
+    { k: 'jaminan', t: 'Baris jaminan (footer)', half: 1 }, { k: 'teks_footer', t: 'Teks footer', half: 1 }, { k: 'meta_deskripsi', t: 'Deskripsi untuk Google & pratinjau WhatsApp', type: 'textarea', rows: 2 }];
+  const SEC_DEF = { sosmed_gaya: 'tombol', produk_judul: 'Produk Pilihan', produk_jumlah: '10' };
+  async function saveSet(obj, btn) {
+    const r = await call('saveSettings', { settings: obj }, btn);
+    if (r.success) { A.admin.settings = r.data.settings; setBoot(A.admin); refreshPublic(); }
+    return r;
+  }
+  function editSection(s) {
+    const inf = SEC_INFO[s.id] || {}, vals = Object.assign({}, SEC_DEF, B().settings || {});
+    const o = A.sheet('<form class="f">' + (inf.spec ? form(inf.spec, vals) : '') +
+      (s.id === 'sosmed' ? '<div class="sos-prev" data-sp></div>' : '') +
+      (inf.link ? '<a class="btn btn-ghost" href="#/' + inf.link + '" data-lk>' + I('open_in_new') + esc(inf.linkT) + '</a>' : '') +
+      (inf.spec ? '<div class="row"><button type="button" class="btn btn-ghost" data-x>Batal</button><button class="btn btn-ink grow" data-save>' + I('save') + 'Simpan</button></div>' : '') + '</form>', { title: s.nama_bagian });
+    const f = o.querySelector('form'); bindUploads(f);
+    const lk = o.querySelector('[data-lk]'); if (lk) lk.onclick = () => o.close();
+    const sp = o.querySelector('[data-sp]');
+    const drawSp = () => { if (!sp || !A.sosmedList) return; sp.className = 'sos-prev soc-wrap ' + f.sosmed_gaya.value; sp.innerHTML = '<div class="' + (f.sosmed_gaya.value === 'bulat' ? 'socs-r' : 'socs-b') + '">' + A.sosmedList((B().socials || []).filter(x => x.aktif !== false).slice(0, 4), f.sosmed_gaya.value) + '</div>'; };
+    if (sp) { f.sosmed_gaya.onchange = drawSp; drawSp(); }
+    f.onsubmit = async e => { e.preventDefault(); const r = await saveSet(read(f, inf.spec), f.querySelector('[data-save]')); if (r.success) o.close(); };
+  }
   VIEWS.tampilan = function (m) {
     const secs = (B().sections || []).slice();
-    m.innerHTML = head('Profil & Urutan Halaman', '<a class="btn btn-ghost btn-sm" href="#/" target="_blank">' + I('open_in_new') + 'Lihat Link Bio</a>') +
-      '<div class="two"><div class="panel"><div class="panel-h"><h3>Urutan bagian link bio</h3></div><p class="muted small" style="margin:-6px 0 12px">Geser naik/turun dan nyalakan/matikan bagian. Tersimpan untuk semua pengunjung.</p><div class="order" data-order></div><button class="btn btn-ink btn-block mt12" data-sv-order>' + I('save') + 'Simpan Urutan</button></div>' +
-      '<form class="panel f" data-set>' + form(SET_SPEC, B().settings) + '<button class="btn btn-ink" data-save>' + I('save') + 'Simpan Tampilan</button></form></div>';
-    const box = m.querySelector('[data-order]');
-    const draw = () => { box.innerHTML = secs.map((s, i) => '<div class="li' + (s.tampil ? '' : ' off') + '"><span class="drag">' + I('drag_indicator') + '</span><b class="grow" style="font:600 14px var(--f-body)">' + (i + 1) + '. ' + esc(s.nama_bagian) + '</b><div class="acts"><button class="icon-btn" data-u="' + i + '" aria-label="Naik"' + (i ? '' : ' disabled') + '>' + I('arrow_upward') + '</button><button class="icon-btn" data-dn="' + i + '" aria-label="Turun"' + (i < secs.length - 1 ? '' : ' disabled') + '>' + I('arrow_downward') + '</button><label class="switch"><input type="checkbox" data-t="' + i + '"' + (s.tampil ? ' checked' : '') + ' aria-label="Tampilkan"><i></i></label></div></div>').join(''); };
-    box.onclick = e => { const u = e.target.closest('[data-u]'), d = e.target.closest('[data-dn]'); if (u) { const i = +u.dataset.u;[secs[i - 1], secs[i]] = [secs[i], secs[i - 1]]; draw(); } if (d) { const i = +d.dataset.dn;[secs[i + 1], secs[i]] = [secs[i], secs[i + 1]]; draw(); } };
-    box.onchange = e => { const t = e.target.closest('[data-t]'); if (t) { secs[+t.dataset.t].tampil = t.checked; draw(); } };
+    m.innerHTML = head('Profil & Urutan Halaman', '<a class="btn btn-ghost btn-sm" href="../" target="_blank">' + I('open_in_new') + 'Lihat Link Bio</a>') +
+      '<div class="note">' + I('info') + '<div>Atur <b>urutan</b> bagian link bio dengan tombol ▲▼, nyalakan/matikan dengan saklar, lalu ketuk <b>Atur</b> untuk mengubah isi bagian itu.</div></div>' +
+      '<div class="panel"><div class="panel-h"><h3>Bagian Link Bio</h3><button class="btn btn-ink btn-sm" data-sv-order disabled>' + I('save') + 'Simpan Urutan</button></div><div class="order" data-order></div></div>' +
+      '<form class="panel f" data-set><div class="panel-h"><h3>Halaman lain, footer & SEO</h3></div>' + form(PAGE_SPEC, B().settings) + '<button class="btn btn-ink" style="justify-self:start" data-save>' + I('save') + 'Simpan</button></form>';
+    const box = m.querySelector('[data-order]'), sv = m.querySelector('[data-sv-order]');
+    const dirty = () => { sv.disabled = false; sv.classList.add('btn-amber'); sv.classList.remove('btn-ink'); };
+    const draw = () => {
+      box.innerHTML = secs.map((s, i) => { const inf = SEC_INFO[s.id] || {};
+        return '<div class="sec-row' + (s.tampil ? '' : ' off') + '"><span class="num">' + (i + 1) + '</span><span class="avatar-i">' + I(inf.i || 'widgets') + '</span>' +
+          '<div class="grow"><b>' + esc(s.nama_bagian) + '</b><span class="muted small ell" style="display:block">' + esc(inf.d || '') + '</span></div>' +
+          '<div class="acts"><button class="icon-btn" data-u="' + i + '" aria-label="Naik"' + (i ? '' : ' disabled') + '>' + I('arrow_upward') + '</button><button class="icon-btn" data-dn="' + i + '" aria-label="Turun"' + (i < secs.length - 1 ? '' : ' disabled') + '>' + I('arrow_downward') + '</button>' +
+          '<label class="switch" title="Tampilkan"><input type="checkbox" data-t="' + i + '"' + (s.tampil ? ' checked' : '') + ' aria-label="Tampilkan ' + esc(s.nama_bagian) + '"><i></i></label>' +
+          '<button class="btn btn-ghost btn-xs" data-ed="' + i + '">' + I('edit') + 'Atur</button></div></div>'; }).join('');
+    };
+    box.onclick = e => {
+      const u = e.target.closest('[data-u]'), d = e.target.closest('[data-dn]'), ed = e.target.closest('[data-ed]');
+      if (u) { const i = +u.dataset.u;[secs[i - 1], secs[i]] = [secs[i], secs[i - 1]]; draw(); dirty(); }
+      if (d) { const i = +d.dataset.dn;[secs[i + 1], secs[i]] = [secs[i], secs[i + 1]]; draw(); dirty(); }
+      if (ed) editSection(secs[+ed.dataset.ed]);
+    };
+    box.onchange = e => { const t = e.target.closest('[data-t]'); if (t) { secs[+t.dataset.t].tampil = t.checked; draw(); dirty(); } };
     draw();
-    m.querySelector('[data-sv-order]').onclick = async ev => { const r = await call('saveSections', { sections: secs.map(s => ({ id: s.id, tampil: s.tampil })) }, ev.currentTarget); if (r.success) { A.admin.sections = r.data.sections; setBoot(A.admin); refreshPublic(); } };
-    const f = m.querySelector('[data-set]'); bindUploads(f);
-    f.onsubmit = async e => { e.preventDefault(); const r = await call('saveSettings', { settings: read(f, SET_SPEC) }, f.querySelector('[data-save]')); if (r.success) { A.admin.settings = r.data.settings; setBoot(A.admin); refreshPublic(); } };
+    sv.onclick = async ev => { const r = await call('saveSections', { sections: secs.map(s => ({ id: s.id, tampil: s.tampil })) }, ev.currentTarget); if (r.success) { A.admin.sections = r.data.sections; setBoot(A.admin); refreshPublic(); sv.disabled = true; sv.classList.remove('btn-amber'); sv.classList.add('btn-ink'); } };
+    const f = m.querySelector('[data-set]');
+    f.onsubmit = async e => { e.preventDefault(); await saveSet(read(f, PAGE_SPEC), f.querySelector('[data-save]')); };
   };
 
   /* ======================= LIST GENERIK (banner, rekening, sosmed, layanan) ======================= */
@@ -464,9 +502,11 @@
   VIEWS.popup = function (m) {
     const s = B().settings || {};
     m.innerHTML = head('Pop-up Promo') + '<div class="two"><form class="panel f" data-f>' + form(POP_SPEC, s) + '<button class="btn btn-ink" data-save>' + I('save') + 'Simpan Pop-up</button></form>' +
-      '<div class="panel"><h3 style="font:700 15px var(--f-head);margin-bottom:10px">Pratinjau</h3><div class="card pad" data-pv></div><p class="muted small mt8">Mengaktifkan pop-up mengirim notifikasi WA ke admin cabang (bila modul notifikasi aktif).</p></div></div>';
-    const f = m.querySelector('[data-f]'), pv = m.querySelector('[data-pv]'); bindUploads(f);
-    const draw = () => { const d = read(f, POP_SPEC), g = d.popup_gambar || ((B().banners || [])[0] || {}).gambar_url; pv.innerHTML = (d.popup_aktif === 'YA' ? '' : '<span class="chip chip-no">Nonaktif</span>') + (g ? '<img class="popup-img mt8" src="' + esc(img(g, 600)) + '" alt="">' : '') + '<h3 style="font:800 18px var(--f-head);margin-top:10px">' + esc(d.popup_judul) + '</h3><p class="muted small">' + esc(d.popup_teks) + '</p><span class="btn btn-amber btn-sm">' + esc(d.popup_tombol_teks || 'Lihat') + '</span>'; };
+      '<div class="panel"><h3 style="font:700 15px var(--f-head);margin-bottom:10px">Pratinjau</h3><div class="pop-prev" data-poppv></div><p class="muted small mt8">Mengaktifkan pop-up mengirim notifikasi WA ke admin cabang (bila modul notifikasi aktif).</p></div></div>';
+    const f = m.querySelector('[data-f]'), pv = m.querySelector('[data-poppv]'); bindUploads(f);
+    const draw = () => { const d = read(f, POP_SPEC), g = d.popup_gambar || ((B().banners || [])[0] || {}).gambar_url; pv.innerHTML = '<div class="pop-phone"><div class="pop-card">' + (d.popup_aktif === 'YA' ? '<span class="chip chip-ok pop-st">Aktif</span>' : '<span class="chip chip-no pop-st">Nonaktif — tidak tampil</span>') +
+      (g ? '<img class="popup-img" src="' + esc(img(g, 600)) + '" alt="">' : '<div class="popup-img"></div>') + '<h3>' + esc(d.popup_judul || 'Judul promo') + '</h3>' + (d.popup_teks ? '<p>' + esc(d.popup_teks) + '</p>' : '') +
+      '<div class="row mt12"><span class="btn btn-ghost btn-sm">Nanti saja</span><span class="btn btn-amber btn-sm grow">' + esc(d.popup_tombol_teks || 'Lihat') + '</span></div></div></div>'; };
     f.addEventListener('input', A.debounce(draw, 150)); f.addEventListener('change', draw); draw();
     f.onsubmit = async e => { e.preventDefault(); const r = await call('saveSettings', { settings: read(f, POP_SPEC) }, f.querySelector('[data-save]')); if (r.success) { A.admin.settings = r.data.settings; setBoot(A.admin); refreshPublic(); } };
   };
@@ -477,6 +517,12 @@
   VIEWS.cabang = function (m) {
     m.innerHTML = head('Cabang & Sosial Media') + '<div class="two">' + (B().branches || []).map(b => '<form class="panel f" data-br="' + esc(b.id) + '"><div class="panel-h"><h3>' + I('storefront') + ' ' + esc(b.nama) + '</h3></div>' + form(BR_SPEC, b) + '<button class="btn btn-ink" data-save>' + I('save') + 'Simpan ' + esc(cabNama(b.id)) + '</button></form>').join('') + '</div><div data-soc></div>';
     m.querySelectorAll('[data-br]').forEach(f => f.onsubmit = async e => { e.preventDefault(); const d = Object.assign(read(f, BR_SPEC), { id: f.dataset.br }); const r = await call('saveBranch', d, f.querySelector('[data-save]')); if (r.success) { const i = A.admin.branches.findIndex(x => x.id === r.data.id); A.admin.branches[i] = r.data; setBoot(A.admin); refreshPublic(); } });
+    const gw = document.createElement('div'); gw.className = 'panel'; m.querySelector('[data-soc]').appendChild(gw);
+    const gaya0 = (B().settings || {}).sosmed_gaya === 'bulat' ? 'bulat' : 'tombol';
+    gw.innerHTML = '<div class="panel-h"><h3>Gaya tampilan sosial media</h3><div class="seg" data-gy>' + GAYA_SOS.map(x => '<button data-v="' + x[0] + '"' + (x[0] === gaya0 ? ' class="on"' : '') + '>' + x[1] + '</button>').join('') + '</div></div><div class="sos-prev" data-sp></div>';
+    const drawG = v => { const sp = gw.querySelector('[data-sp]'); sp.className = 'sos-prev soc-wrap ' + v; sp.innerHTML = '<div class="' + (v === 'bulat' ? 'socs-r' : 'socs-b') + '">' + (A.sosmedList ? A.sosmedList((B().socials || []).filter(x => x.aktif !== false), v) : '') + '</div>'; };
+    drawG(gaya0);
+    gw.querySelector('[data-gy]').onclick = async e => { const b = e.target.closest('[data-v]'); if (!b) return; gw.querySelectorAll('[data-gy] button').forEach(x => x.classList.toggle('on', x === b)); drawG(b.dataset.v); await saveSet({ sosmed_gaya: b.dataset.v }); };
     const soc = document.createElement('div'); m.querySelector('[data-soc]').appendChild(soc);
     crudList(soc, { title: 'Sosial Media Resmi', key: 'socials', save: 'saveSocial', del: 'deleteSocial', addText: 'Tambah Kanal', order: 1,
       spec: [{ k: 'platform', t: 'Platform', type: 'select', half: 1, opts: ['TikTok', 'Instagram', 'Facebook', 'WhatsApp', 'YouTube', 'Shopee', 'Tokopedia', 'Website'] }, { k: 'label', t: 'Label / akun', half: 1, ph: '@counter.accell' }, { k: 'url', t: 'Tautan', ph: 'https://… (WhatsApp: isi #wa untuk pilih cabang)' }],
@@ -520,7 +566,7 @@
   VIEWS.akun = function (m) {
     const u = A.user;
     m.innerHTML = head('Akun Saya') + '<div class="two"><div class="panel"><div class="row"><span class="avatar-i" style="width:52px;height:52px;font-size:18px">' + esc((u.nama || 'A')[0]) + '</span><div><b style="font:700 16px var(--f-head)">' + esc(u.nama) + '</b><div class="muted small">' + esc(u.username) + ' · ' + (isSA() ? 'Superadmin' : 'Admin ' + cabNama(u.cabang)) + '</div></div></div>' +
-      '<div class="menu-grid mt16" style="grid-template-columns:1fr"><a href="#/" target="_blank">' + I('open_in_new') + 'Buka Link Bio</a><button data-nk-license>' + I('key') + 'Lisensi Template</button><button data-out>' + I('logout') + 'Keluar dari dasbor</button></div></div>' +
+      '<div class="menu-grid mt16" style="grid-template-columns:1fr"><a href="../" target="_blank">' + I('open_in_new') + 'Buka Link Bio</a><button data-nk-license>' + I('key') + 'Lisensi Template</button><button data-out>' + I('logout') + 'Keluar dari dasbor</button></div></div>' +
       '<form class="panel f"><h3 style="font:700 16px var(--f-head)">Ganti Sandi</h3>' + pwFields() + '<div class="small" style="color:var(--danger);min-height:16px" data-err></div><button class="btn btn-ink" data-go>Simpan Sandi Baru</button></form></div>';
     m.querySelector('[data-out]').onclick = () => logout('Anda telah keluar.');
     bindPw(m.querySelector('form'), r => { saveAuth(r.data.token, r.data.user, false); if (r.data.boot) setBoot(r.data.boot); m.querySelector('form').reset(); });
@@ -707,7 +753,7 @@
       b.querySelector('.bulkbar').onclick = async e => {
         const x = e.target.closest('[data-b]'); if (!x) return; const aksi = x.dataset.b, ids = [...crmSel];
         if (aksi === 'clear') { crmSel.clear(); return loadList(); }
-        if (aksi === 'blast') { const r = await A.api('crm.export', {}); if (!r.success) return A.toast(r.message, 'err'); const pilih = r.data.filter(k => crmSel.has(k.id) && k.wa); notifTab = 'blast'; A.go('admin/notif'); setTimeout(() => { const box = el.querySelector('[data-tb]'); if (!box) return; box.querySelector('[data-src]').value = 'manual'; box.querySelector('[data-src]').onchange(); box.querySelector('[data-man]').value = pilih.map(k => k.wa + '|' + k.nama).join('\n'); box.querySelector('[data-load]').click(); }, 120); return; }
+        if (aksi === 'blast') { const r = await A.api('crm.export', {}); if (!r.success) return A.toast(r.message, 'err'); const pilih = r.data.filter(k => crmSel.has(k.id) && k.wa); notifTab = 'blast'; A.go('notif'); setTimeout(() => { const box = el.querySelector('[data-tb]'); if (!box) return; box.querySelector('[data-src]').value = 'manual'; box.querySelector('[data-src]').onchange(); box.querySelector('[data-man]').value = pilih.map(k => k.wa + '|' + k.nama).join('\n'); box.querySelector('[data-load]').click(); }, 120); return; }
         if (aksi === 'merge') { if (ids.length < 2) return A.toast('Pilih minimal 2 kontak', 'info'); if (!await A.confirm('Gabungkan ' + ids.length + ' kontak ke kontak pertama yang dipilih?', 'Gabungkan')) return; const r = await call('crm.merge', { utama: ids[0], gabung: ids.slice(1) }, x); if (r.success) { crmSel.clear(); loadAll(); } return; }
         let nilai = '';
         if (aksi === 'tag') { nilai = prompt('Nama tag:'); if (!nilai) return; }

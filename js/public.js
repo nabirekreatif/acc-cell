@@ -21,12 +21,21 @@
   const demoNote = () => A.demo ? '<div class="note amber mt12">' + I('info') + '<div><b>Mode demo</b> — menampilkan data contoh. Hubungkan backend di <span class="mono">js/config.js</span> agar data dikelola dari dasbor.</div></div>' : '';
 
   /* ======================= LINK BIO ======================= */
-  const SOC = { tiktok: ['music_note', '#0B0B0C'], instagram: ['photo_camera', 'linear-gradient(45deg,#F58529,#DD2A7B,#8134AF)'], facebook: ['thumb_up', '#1877F2'],
-    whatsapp: ['chat', '#25D366'], youtube: ['smart_display', '#FF0000'], shopee: ['shopping_bag', '#EE4D2D'], tokopedia: ['storefront', '#03AC0E'], website: ['public', '#5f5e5f'] };
+  const socIcon = A.socIcon, sosmedList = A.sosmedList;
+  // urutan acak tetap selama satu kunjungan (tidak berubah saat data diperbarui)
+  const SEED = Math.floor(Math.random() * 1e9);
+  function acak(arr) { let x = SEED; const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { x = (x * 1103515245 + 12345) % 2147483648; const j = x % (i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  function miniCard(p) {
+    const f = (p.foto || [])[0];
+    return '<a class="mcard" href="#/produk/' + encodeURIComponent(p.id) + '"><div class="mimg">' + (f ? '<img src="' + esc(img(f, 400)) + '" alt="' + esc(p.nama) + '" loading="lazy">' : '') +
+      (p.harga_coret ? '<span class="chip chip-amber">Promo</span>' : '') + '</div><div class="mbody"><span class="pmeta ell">' + esc(p.merek || p.kategori) + '</span><b class="mname">' + esc(p.nama) + '</b>' +
+      (p.harga_coret ? '<s class="strike">' + rp(p.harga_coret) + '</s>' : '<span class="strike"></span>') + '<span class="price">' + rp(p.harga) + '</span></div></a>';
+  }
+
   const SECTIONS = {
     profil: () => '<div class="profile"><div class="avatar"><img src="' + esc(logo()) + '" alt="Logo ' + esc(S().nama_toko) + '" width="100" height="100"><span class="verif" title="Akun resmi">' + I('verified', 'fill') + '</span></div>' +
-      '<h1>' + esc(S().nama_toko || 'Acc Cell') + (S().subjudul ? ' <small>— ' + esc(S().subjudul) + '</small>' : '') + '</h1>' +
-      (S().tagline ? '<p>' + esc(S().tagline) + '</p>' : '') + (S().status_buka ? '<div class="status-pill"><i></i>' + esc(S().status_buka) + '</div>' : '') + '</div>',
+      '<h1>' + esc(S().nama_toko || 'Acc Cell') + '</h1>' +
+      (S().tagline ? '<p>' + esc(S().tagline) + '</p>' : '') + (S().status_buka ? '<div class="status-pill">' + I('schedule') + esc(S().status_buka) + '</div>' : '') + '</div>',
     hero: () => {
       const b = A.pub.banners || []; if (!b.length) return '';
       return '<div class="hero" data-hero><div class="hero-track">' + b.map((x, i) =>
@@ -44,17 +53,22 @@
       '<a class="tile main" href="#/katalog"><span class="ic">' + I('smartphone') + '</span><span class="grow"><h3>Katalog Smartphone &amp; Aksesoris</h3><p>' + esc(S().menu_katalog_sub || '') + '</p></span><span class="go">' + I('arrow_forward') + '</span></a>' +
       '<a class="tile" href="#/bayar"><span class="ic">' + I('account_balance_wallet') + '</span><span class="grow"><h3>Rekening &amp; QRIS Resmi <span class="chip chip-ok" style="vertical-align:2px">' + I('verified_user') + 'Verifikasi Toko</span></h3><p>' + esc(S().menu_bayar_sub || '') + '</p></span><span class="go">' + I('arrow_forward') + '</span></a>' +
       '<a class="tile" href="#/layanan"><span class="ic">' + I('published_with_changes') + '</span><span class="grow"><h3>Jual HP, Tukar Tambah &amp; Servis</h3><p>' + esc(S().menu_layanan_sub || '') + '</p></span><span class="go">' + I('arrow_forward') + '</span></a></div>',
+    produk: () => {
+      const all = (A.pub.products || []).filter(p => p.status !== 'Habis');
+      if (!all.length) return '';
+      const n = Math.min(20, Math.max(4, Number(S().produk_jumlah) || 10));
+      return '<div class="sec-head"><h2 class="sec-title">' + esc(S().produk_judul || 'Produk Pilihan') + '</h2><a class="see-all" href="#/katalog">Lihat semua' + I('arrow_forward') + '</a></div>' +
+        '<div class="pslide-wrap"><button class="pnav prev" data-pnav="-1" aria-label="Sebelumnya">' + I('chevron_left') + '</button><div class="pslider" data-pslider>' + acak(all).slice(0, n).map(miniCard).join('') + '</div><button class="pnav next" data-pnav="1" aria-label="Berikutnya">' + I('chevron_right') + '</button></div>';
+    },
     sosmed: () => {
       const s = A.pub.socials || []; if (!s.length) return '';
-      return '<div class="card soc-card"><h4>Kanal Sosial Media Resmi</h4><div class="socs">' + s.map(x => {
-        const k = String(x.platform || '').toLowerCase(), m = SOC[k] || SOC.website, wa = x.url === '#wa' || (k === 'whatsapp' && !/^https?:/.test(x.url || ''));
-        return '<a class="soc" ' + (wa ? 'href="#" data-wa-any' : 'href="' + esc(x.url) + '" target="_blank" rel="noopener"') + ' data-soc="' + esc(k) + '"><span class="b" style="background:' + m[1] + '">' + I(m[0], 'fill') + '</span><b>' + esc(x.platform) + '</b><span>' + esc(x.label || '') + '</span></a>';
-      }).join('') + '</div></div>';
+      const gaya = S().sosmed_gaya === 'bulat' ? 'bulat' : 'tombol';
+      return '<div class="soc-wrap ' + gaya + '"><h4>Kanal Sosial Media Resmi</h4><div class="' + (gaya === 'bulat' ? 'socs-r' : 'socs-b') + '">' + sosmedList(s, gaya) + '</div></div>';
     },
     cabang: () => {
       const b = A.branches(); if (!b.length) return '';
       return '<div class="sec-head"><h2 class="sec-title">Lokasi Toko &amp; Kontak WhatsApp</h2></div>' + b.map(x =>
-        '<div class="card branch"><div class="top"><span class="ic">' + I('storefront') + '</span><div class="grow"><h3>' + esc(x.nama) + ' <i title="Buka"></i></h3><p>' + esc(x.alamat || '') + '</p>' + (x.jam_buka ? '<p>Buka: ' + esc(x.jam_buka) + '</p>' : '') + '</div></div>' +
+        '<div class="card branch"><div class="top"><span class="ic">' + I('storefront') + '</span><div class="grow"><h3>' + esc(x.nama) + '</h3><p>' + esc(x.alamat || '') + '</p>' + (x.jam_buka ? '<p>Buka: ' + esc(x.jam_buka) + '</p>' : '') + '</div></div>' +
         (x.embed_maps ? '<div class="map-mini" data-map="' + esc(x.embed_maps) + '"></div>' : '') +
         '<div class="acts"><button class="btn btn-wa btn-sm" data-wa="' + esc(x.id) + '">' + I('chat', 'fill') + 'Chat ' + esc(cabNama(x.id)) + '</button>' +
         '<a class="btn btn-soft btn-sm" href="' + esc(x.link_maps || ('https://maps.google.com/?q=' + encodeURIComponent(x.alamat || x.nama))) + '" target="_blank" rel="noopener">' + I('near_me') + 'Google Maps</a></div></div>').join('');
@@ -63,8 +77,7 @@
   function tujuan(t) { t = String(t || ''); if (/^https?:/.test(t)) return t; if (t === 'katalog') return '#/katalog'; if (t === 'pembayaran' || t === 'bayar') return '#/bayar'; if (t === 'layanan') return '#/layanan'; return '#/katalog'; }
   function footer() {
     return '<footer class="foot">' + (S().jaminan ? '<div class="jam"><i></i>' + esc(S().jaminan) + '<i></i></div>' : '') +
-      '<div>' + esc(S().teks_footer || '') + '</div><div class="nk-copy" data-nk-copy>' + A.nkCopy() + '</div>' +
-      '<a class="adm-link" href="#/admin">' + I('lock') + 'Masuk Portal Admin Toko</a> · <a class="adm-link" href="#key">' + I('key') + 'Aktifkan lisensi</a></footer>';
+      '<div>' + esc(S().teks_footer || '') + '</div></footer>';
   }
 
   let heroTimer = null;
@@ -89,6 +102,8 @@
       const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { const m = e.target; m.innerHTML = '<iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Peta lokasi" src="' + esc(m.dataset.map) + '"></iframe>'; io.unobserve(m); } }), { rootMargin: '200px' });
       maps.forEach(m => io.observe(m));
     }
+    const ps = el.querySelector('[data-pslider]');
+    if (ps) el.querySelectorAll('[data-pnav]').forEach(b => b.onclick = () => ps.scrollBy({ left: +b.dataset.pnav * ps.clientWidth * 0.8, behavior: 'smooth' }));
     // slider otomatis
     clearInterval(heroTimer);
     const hero = el.querySelector('[data-hero]'); if (!hero) return;
@@ -122,17 +137,27 @@
   const hashP = s => A.hashStr([s.popup_judul, s.popup_gambar, s.popup_teks].join('|'));
 
   /* ======================= KATALOG ======================= */
-  const K = A.kat = { q: '', cab: '', kat: '', n: 12, scroll: 0 };
+  const K = A.kat = { q: '', cab: '', kat: '', sort: '', hideSold: false, n: 12, scroll: 0 };
   const PER = 12;
-  function filtered() {
-    const q = K.q.trim().toLowerCase();
-    return (A.pub.products || []).filter(p => {
-      if (K.kat && p.kategori !== K.kat) return false;
-      if (K.cab && p.cabang !== K.cab && p.cabang !== 'keduanya') return false;
+  const SORTS = [['', 'Rekomendasi'], ['murah', 'Harga terendah'], ['mahal', 'Harga tertinggi'], ['baru', 'Terbaru']];
+  const CAT_LABEL = { '': 'Semua', 'HP Baru': 'HP Baru', 'HP Second': 'HP Second', 'Aksesoris': 'Aksesoris' };
+  function filtered(f) {
+    f = f || K; const q = f.q.trim().toLowerCase();
+    const list = (A.pub.products || []).filter(p => {
+      if (f.kat && p.kategori !== f.kat) return false;
+      if (f.cab && p.cabang !== f.cab && p.cabang !== 'keduanya') return false;
+      if (f.hideSold && p.status === 'Habis') return false;
       if (q && (p.nama + ' ' + p.merek + ' ' + p.ram + ' ' + p.memori + ' ' + p.kondisi + ' ' + p.kategori).toLowerCase().indexOf(q) < 0) return false;
       return true;
-    }).sort((a, b) => (a.status === 'Habis') - (b.status === 'Habis'));
+    });
+    const sold = (a, b) => (a.status === 'Habis') - (b.status === 'Habis');
+    if (f.sort === 'murah') list.sort((a, b) => sold(a, b) || a.harga - b.harga);
+    else if (f.sort === 'mahal') list.sort((a, b) => sold(a, b) || b.harga - a.harga);
+    else if (f.sort === 'baru') list.sort((a, b) => sold(a, b) || String(b.dibuat).localeCompare(String(a.dibuat)));
+    else list.sort(sold);
+    return list;
   }
+  const activeCount = () => (K.cab ? 1 : 0) + (K.sort ? 1 : 0) + (K.hideSold ? 1 : 0);
   function card(p) {
     const sold = p.status === 'Habis', foto = (p.foto || [])[0];
     return '<article class="pcard' + (sold ? ' sold' : '') + '" data-p="' + esc(p.id) + '" tabindex="0" aria-label="' + esc(p.nama) + '">' +
@@ -157,27 +182,25 @@
     }
   });
   function build(el) {
-    const s = S(), cats = ['', 'HP Baru', 'HP Second', 'Aksesoris'];
-    const catLabel = { '': 'Semua', 'HP Baru': 'HP Baru (Segel)', 'HP Second': 'HP Second Mulus', 'Aksesoris': 'Aksesoris' };
+    const s = S();
     el.innerHTML = '<div class="wide">' +
-      '<div class="kat-head"><a class="back" href="#/">' + I('arrow_back') + 'Kembali ke Link Bio</a><span class="live"><i></i>Stok Live</span></div>' + demoNote() +
+      '<a class="back" href="#/">' + I('arrow_back') + 'Kembali ke Link Bio</a>' + demoNote() +
       '<h1 class="kat-title">' + esc(s.katalog_judul || 'Katalog') + '</h1><p class="muted" style="margin:0">' + esc(s.katalog_sub || '') + '</p>' +
-      '<div class="search">' + I('search') + '<input type="search" placeholder="Cari iPhone, Samsung, RAM, atau tipe…" value="' + esc(K.q) + '" aria-label="Cari produk" data-q><button class="clr" data-clr hidden aria-label="Hapus">' + I('close') + '</button></div>' +
-      '<div class="lbl-row"><span>Lokasi Toko</span><b data-cablbl></b></div><div class="pills" data-cab>' +
-      [['', 'Semua Cabang', 'domain'], ['nabire', 'Nabire', 'location_on'], ['serui', 'Serui', 'location_on']].map(c => '<button class="pill" data-v="' + c[0] + '">' + I(c[2]) + c[1] + '</button>').join('') + '</div>' +
-      '<div class="pills mt8" data-kat>' + cats.map(c => '<button class="pill" data-v="' + c + '">' + catLabel[c] + ' <span class="cnt" data-cnt="' + c + '"></span></button>').join('') + '</div>' +
-      '<div class="card trust"><span class="ic">' + I('verified') + '</span><div class="grow"><b style="font:700 14px var(--f-head)">100% Produk Dijamin Original</b><div class="muted small">Garansi resmi &amp; klaim langsung dibantu teknisi kami</div></div></div>' +
+      '<div class="kat-bar"><div class="kat-tools"><div class="search">' + I('search') + '<input type="search" placeholder="Cari iPhone, Samsung, RAM…" value="' + esc(K.q) + '" aria-label="Cari produk" data-q><button class="clr" data-clr hidden aria-label="Hapus">' + I('close') + '</button></div>' +
+      '<button class="btn-filter" data-filter aria-label="Filter & urutkan">' + I('tune') + '<span>Filter</span><b class="fbadge" data-fcount hidden></b></button></div>' +
+      '<div class="pills seg-pills" data-kat>' + Object.keys(CAT_LABEL).map(c => '<button class="pill" data-v="' + c + '">' + CAT_LABEL[c] + ' <span class="cnt" data-cnt="' + c + '"></span></button>').join('') + '</div></div>' +
+      '<div class="kat-info"><span data-count></span><span class="row wrap" data-active></span></div>' +
       '<div class="grid" data-grid></div><div class="more" data-more></div>' +
       '<div class="card cta-card"><h3>' + I('support_agent') + 'Butuh Tipe Lain yang Belum Terdaftar?</h3><p class="muted small" style="margin:6px 0 12px">Admin kami dapat mengecek ketersediaan unit di gudang atau melayani Pre-Order resmi.</p>' +
-      '<div class="row">' + A.branches().map(b => '<button class="btn btn-ghost btn-sm grow" data-cs="' + esc(b.id) + '">' + I('chat') + 'CS ' + esc(cabNama(b.id)) + '</button>').join('') + '</div></div>' +
-      '<footer class="foot"><div class="nk-copy" data-nk-copy>' + A.nkCopy() + '</div></footer></div>';
+      '<div class="row">' + A.branches().map(b => '<button class="btn btn-ghost btn-sm grow" data-cs="' + esc(b.id) + '">' + I('chat') + 'CS ' + esc(cabNama(b.id)) + '</button>').join('') + '</div></div></div>';
     el.dataset.built = '1';
     const inp = el.querySelector('[data-q]'), clr = el.querySelector('[data-clr]');
     inp.addEventListener('input', A.debounce(() => { K.q = inp.value; K.n = PER; clr.hidden = !K.q; renderGrid(el); }, 200));
     clr.onclick = () => { inp.value = ''; K.q = ''; clr.hidden = true; renderGrid(el); inp.focus(); };
     clr.hidden = !K.q;
-    el.querySelector('[data-cab]').onclick = e => { const b = e.target.closest('[data-v]'); if (!b) return; K.cab = b.dataset.v; K.n = PER; renderGrid(el); };
     el.querySelector('[data-kat]').onclick = e => { const b = e.target.closest('[data-v]'); if (!b) return; K.kat = b.dataset.v; K.n = PER; renderGrid(el); };
+    el.querySelector('[data-filter]').onclick = () => filterSheet(el);
+    el.querySelector('[data-active]').onclick = e => { const x = e.target.closest('[data-rm]'); if (!x) return; if (x.dataset.rm === 'cab') K.cab = ''; if (x.dataset.rm === 'sort') K.sort = ''; if (x.dataset.rm === 'sold') K.hideSold = false; renderGrid(el); };
     el.querySelectorAll('[data-cs]').forEach(b => b.onclick = () => A.openWa(b.dataset.cs, 'Halo Admin Acc Cell ' + cabNama(b.dataset.cs) + ', saya mencari tipe HP: '));
     el.querySelector('[data-grid]').addEventListener('click', e => {
       const o = e.target.closest('[data-order]'), a = e.target.closest('[data-ask]'), c = e.target.closest('[data-p]');
@@ -187,19 +210,62 @@
     });
     el.querySelector('[data-grid]').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset.p) openDetail(e.target.dataset.p); });
   }
+  function filterSheet(el) {
+    const f = Object.assign({}, K);
+    const o = A.sheet('<div class="fsheet">' +
+      '<h4>Lokasi toko</h4><div class="opt-grid" data-g="cab">' + [['', 'Semua cabang'], ['nabire', 'Nabire'], ['serui', 'Serui']].map(x => '<button class="opt" data-v="' + x[0] + '">' + esc(x[1]) + '</button>').join('') + '</div>' +
+      '<h4>Kategori</h4><div class="opt-grid" data-g="kat">' + Object.keys(CAT_LABEL).map(c => '<button class="opt" data-v="' + c + '">' + CAT_LABEL[c] + '</button>').join('') + '</div>' +
+      '<h4>Urutkan</h4><div class="opt-grid" data-g="sort">' + SORTS.map(x => '<button class="opt" data-v="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
+      '<label class="row fswitch"><span class="grow"><b>Sembunyikan stok habis</b></span><span class="switch"><input type="checkbox" data-sold' + (f.hideSold ? ' checked' : '') + '><i></i></span></label>' +
+      '<div class="row mt16"><button class="btn btn-ghost" data-reset>Reset</button><button class="btn btn-ink grow" data-apply></button></div></div>', { title: 'Filter & Urutkan' });
+    const sync = () => {
+      o.querySelectorAll('[data-g]').forEach(g => g.querySelectorAll('.opt').forEach(b => b.classList.toggle('on', b.dataset.v === f[g.dataset.g])));
+      o.querySelector('[data-apply]').textContent = 'Tampilkan ' + filtered(f).length + ' produk';
+    };
+    o.addEventListener('click', e => {
+      const b = e.target.closest('.opt'); if (b) { f[b.closest('[data-g]').dataset.g] = b.dataset.v; sync(); }
+      if (e.target.closest('[data-reset]')) { f.cab = ''; f.kat = ''; f.sort = ''; f.hideSold = false; o.querySelector('[data-sold]').checked = false; sync(); }
+      if (e.target.closest('[data-apply]')) { Object.assign(K, { cab: f.cab, kat: f.kat, sort: f.sort, hideSold: f.hideSold, n: PER }); o.close(); renderGrid(el); }
+    });
+    o.querySelector('[data-sold]').onchange = e => { f.hideSold = e.target.checked; sync(); };
+    sync();
+  }
   function openDetail(id) { K.scroll = window.scrollY; A.go('produk/' + encodeURIComponent(id)); }
   function renderGrid(el) {
     const list = filtered(), grid = el.querySelector('[data-grid]'), more = el.querySelector('[data-more]');
-    el.querySelectorAll('[data-cab] .pill').forEach(b => { b.classList.toggle('on-ink', b.dataset.v === K.cab); });
     el.querySelectorAll('[data-kat] .pill').forEach(b => b.classList.toggle('on', b.dataset.v === K.kat));
-    el.querySelector('[data-cablbl]').textContent = K.cab ? 'Toko ' + cabNama(K.cab) : 'Semua Toko Terpilih';
     const all = (A.pub.products || []).filter(p => !K.cab || p.cabang === K.cab || p.cabang === 'keduanya');
     el.querySelectorAll('[data-cnt]').forEach(s => { const c = s.dataset.cnt; s.textContent = all.filter(p => !c || p.kategori === c).length; });
-    if (!list.length) { grid.innerHTML = '<div class="empty" style="grid-column:1/-1">' + I('search_off') + '<h3 class="mt8">Produk tidak ditemukan</h3><p>Coba kata kunci lain atau pilih kategori/cabang berbeda.</p><button class="btn btn-ghost btn-sm" data-reset>Reset pencarian</button></div>'; more.innerHTML = ''; grid.querySelector('[data-reset]').onclick = () => { K.q = ''; K.kat = ''; K.cab = ''; el.querySelector('[data-q]').value = ''; renderGrid(el); }; return; }
+    const n = activeCount(), badge = el.querySelector('[data-fcount]'); badge.hidden = !n; badge.textContent = n;
+    el.querySelector('[data-filter]').classList.toggle('on', !!n);
+    el.querySelector('[data-count]').textContent = list.length + ' produk';
+    el.querySelector('[data-active]').innerHTML = (K.cab ? '<button class="chip chip-ink" data-rm="cab">' + I('location_on') + cabNama(K.cab) + ' ' + I('close') + '</button>' : '') +
+      (K.sort ? '<button class="chip chip-ink" data-rm="sort">' + SORTS.find(x => x[0] === K.sort)[1] + ' ' + I('close') + '</button>' : '') +
+      (K.hideSold ? '<button class="chip chip-ink" data-rm="sold">Tanpa stok habis ' + I('close') + '</button>' : '');
+    if (!list.length) { grid.innerHTML = '<div class="empty" style="grid-column:1/-1">' + I('search_off') + '<h3 class="mt8">Produk tidak ditemukan</h3><p>Coba kata kunci lain atau ubah filter.</p><button class="btn btn-ghost btn-sm" data-reset>Reset pencarian</button></div>'; more.innerHTML = ''; grid.querySelector('[data-reset]').onclick = () => { Object.assign(K, { q: '', kat: '', cab: '', sort: '', hideSold: false }); el.querySelector('[data-q]').value = ''; renderGrid(el); }; return; }
     grid.innerHTML = list.slice(0, K.n).map(card).join('');
     more.innerHTML = (list.length > K.n ? '<button class="btn btn-ghost" data-m style="min-width:240px">' + I('sync') + 'Muat Lebih Banyak</button>' : '') + '<span class="muted small">Menampilkan ' + Math.min(K.n, list.length) + ' dari ' + list.length + ' produk</span>';
     const m = more.querySelector('[data-m]'); if (m) m.onclick = () => { K.n += PER; renderGrid(el); };
   }
+  /* ======================= MENU PUBLIK (tombol "Menu") ======================= */
+  A.openMenu = function () {
+    const go = (h, kat) => '<a class="mtile" href="' + h + '"' + (kat !== undefined ? ' data-kat-go="' + kat + '"' : '') + '>';
+    const soc = (A.pub && A.pub.socials) || [];
+    const o = A.sheet('<div class="menu-tiles">' +
+      go('#/') + I('storefront') + '<span>Beranda</span></a>' + go('#/katalog', '') + I('smartphone') + '<span>Semua Produk</span></a>' +
+      go('#/katalog', 'HP Baru') + I('new_releases') + '<span>HP Baru</span></a>' + go('#/katalog', 'HP Second') + I('recycling') + '<span>HP Second</span></a>' +
+      go('#/katalog', 'Aksesoris') + I('headphones') + '<span>Aksesoris</span></a>' + go('#/bayar') + I('account_balance_wallet') + '<span>Rekening &amp; QRIS</span></a>' +
+      go('#/layanan') + I('build_circle') + '<span>Servis &amp; Tukar Tambah</span></a><button class="mtile" data-m-cs>' + I('chat') + '<span>Chat Admin</span></button>' +
+      '<button class="mtile" data-m-share>' + I('share') + '<span>Bagikan</span></button></div>' +
+      (soc.length ? '<h4 class="mt16" style="font:600 13px var(--f-body);color:var(--ink-2);margin-bottom:10px">Sosial media resmi</h4><div class="socs-r">' + sosmedList(soc, 'bulat') + '</div>' : ''), { title: 'Menu' });
+    o.addEventListener('click', e => {
+      const k = e.target.closest('[data-kat-go]'); if (k) { K.kat = k.dataset.katGo; K.n = PER; const kel = document.querySelector('.page[data-page="katalog"]'); if (kel && kel.dataset.built) renderGrid(kel); }
+      if (e.target.closest('a')) { o.close(); if (k && A.cur === 'katalog') A.scrollY(0); }
+      if (e.target.closest('[data-m-cs]')) { o.close(); A.pickBranch(b => 'Halo Admin Acc Cell ' + cabNama(b.id) + ', saya ingin bertanya.'); }
+      if (e.target.closest('[data-m-share]')) { o.close(); const url = location.href.split('#')[0]; if (navigator.share) navigator.share({ title: S().nama_toko || 'Acc Cell', url }).catch(() => { }); else A.copy(url, 'Tautan'); }
+      const w = e.target.closest('[data-wa-any]'); if (w) { e.preventDefault(); o.close(); A.pickBranch(b => 'Halo Admin Acc Cell ' + cabNama(b.id) + ', saya ingin bertanya.'); }
+    });
+  };
   const prod = id => (A.pub.products || []).find(p => p.id === id);
   function pesanProduk(p, warna) {
     return b => 'Halo Admin Acc Cell ' + cabNama(b.id) + ', saya tertarik dengan *' + p.nama + '*' + ([p.ram, p.memori].filter(Boolean).length ? ' (' + [p.ram, p.memori].filter(Boolean).join('/') + ')' : '') +
@@ -242,7 +308,7 @@
         (p.deskripsi ? '<p class="mt12" style="font-size:14px;line-height:21px;white-space:pre-line">' + esc(p.deskripsi) + '</p>' : '') + '</div>' +
         '<div class="card trustrow mt12"><div>' + I('verified_user') + 'IMEI terdaftar Kemenperin</div><div>' + I('swap_horizontal_circle') + 'Bisa tukar tambah</div></div>' +
         '<div class="stickybar"><div class="in"><button class="btn ' + (sold ? 'btn-ink' : 'btn-wa') + '" data-cta>' + I('chat', 'fill') + esc(ctaLabel) + '</button></div></div></div></div>' +
-        '<footer class="foot"><div class="nk-copy" data-nk-copy>' + A.nkCopy() + '</div></footer></div>';
+        '</div>';
       document.body.classList.add('has-sticky');
       let pilihWarna = warna[0] || '';
       el.querySelector('[data-back]').onclick = e => { e.preventDefault(); A._fromDetail = true; A.go('katalog'); };
@@ -267,7 +333,7 @@
       if (!ready(el)) return;
       const pays = A.pub.payments || [], banks = pays.filter(p => p.jenis !== 'QRIS'), qris = pays.filter(p => p.jenis === 'QRIS');
       el.innerHTML = '<div class="col"><a class="back" href="#/">' + I('arrow_back') + 'Kembali ke Link Bio</a>' +
-        '<div class="verif-lbl"><i></i>Verifikasi Sah 100%</div><h1 class="kat-title" style="margin-top:4px">Rekening &amp; QRIS Resmi</h1><p class="muted" style="margin:0">Pusat Pembayaran Sah Acc Cell Cabang Nabire &amp; Serui</p>' +
+        '<h1 class="kat-title">Rekening &amp; QRIS Resmi</h1><p class="muted" style="margin:0">Pusat Pembayaran Sah Acc Cell Cabang Nabire &amp; Serui</p>' +
         '<div class="warnbox"><span class="ic">' + I('gpp_maybe') + '</span><div><h4>Perhatian Keamanan</h4><p>' + esc(S().catatan_pembayaran || '') + '</p></div></div>' +
         (pays.some(p => p.contoh) ? '<div class="note amber mt12">' + I('info') + '<div>Data rekening di bawah masih <b>CONTOH</b>. Superadmin dapat menggantinya di dasbor → Rekening &amp; QRIS.</div></div>' : '') +
         (banks.length ? '<div class="sec-head"><h2 class="sec-title">' + I('account_balance') + 'Transfer Bank Resmi</h2><span class="chip">' + banks.length + ' Rekening Aktif</span></div>' + banks.map(b =>
@@ -283,7 +349,7 @@
           '<div class="steps"><b>' + I('info') + ' Cara Bayar dengan QRIS:</b><ol><li>Buka aplikasi m-Banking atau e-Wallet.</li><li>Pilih menu <b>Pindai / Scan QRIS</b>.</li><li>Arahkan kamera ke layar atau unggah gambar QRIS yang diunduh.</li><li>Pastikan nama merchant tertera: <b>' + esc(qr.atas_nama || '') + '</b>.</li><li>Masukkan nominal sesuai total transaksi &amp; selesaikan pembayaran.</li></ol></div></div>').join('') +
         '<div class="sec-head"><h2 class="sec-title">' + I('mark_chat_read') + 'Konfirmasi Bukti Transfer</h2></div><p class="muted small" style="margin:-4px 2px 4px">Setelah transfer berhasil, kirim tangkapan layar bukti pembayaran ke admin cabang untuk verifikasi.</p>' +
         A.branches().map(b => '<button class="confirm" data-konf="' + esc(b.id) + '"><span class="grow"><b>Konfirmasi ke Admin ' + esc(cabNama(b.id)) + '</b><span>' + esc(hp08(b.nomor_wa)) + ' · ' + esc(b.jam_buka || '') + '</span></span>' + I('arrow_forward') + '</button>').join('') +
-        '<footer class="foot"><div class="nk-copy" data-nk-copy>' + A.nkCopy() + '</div></footer></div>';
+        '</div>';
       el.querySelectorAll('[data-copy]').forEach(b => b.onclick = () => A.copy(b.dataset.copy, 'Nomor rekening'));
       el.querySelectorAll('[data-konf]').forEach(b => b.onclick = () => A.openWa(b.dataset.konf, 'Halo Admin Acc Cell ' + cabNama(b.dataset.konf) + ', saya ingin konfirmasi pembayaran. Bukti transfer saya lampirkan.'));
       el.querySelectorAll('[data-zoom]').forEach(i => i.onclick = () => A.sheet('<div class="zoom"><img src="' + esc(i.src) + '" alt="QRIS"></div><p class="center muted small mt8">Pindai langsung dari layar ini</p>', { center: true }));
@@ -302,7 +368,7 @@
         svc.map(s => '<div class="card svc"><span class="ic">' + I(s.ikon || 'build_circle') + '</span><h3>' + esc(s.judul) + '</h3><p>' + esc(s.deskripsi) + '</p>' +
           '<div class="acts">' + A.branches().map(b => '<button class="btn btn-wa btn-sm" data-svc="' + esc(s.id) + '" data-b="' + esc(b.id) + '">' + I('chat', 'fill') + esc(cabNama(b.id)) + '</button>').join('') + '</div></div>').join('') +
         '<div class="note mt16">' + I('lightbulb') + '<div>Siapkan merek, tipe, dan kondisi HP Anda (sertakan foto) agar admin dapat memberi taksiran lebih cepat.</div></div>' +
-        '<footer class="foot"><div class="nk-copy" data-nk-copy>' + A.nkCopy() + '</div></footer></div>';
+        '</div>';
       el.querySelectorAll('[data-svc]').forEach(b => b.onclick = () => {
         const s = svc.find(x => x.id === b.dataset.svc);
         A.openWa(b.dataset.b, br => String(s.template_wa || ('Halo Admin Acc Cell {cabang}, saya ingin ' + s.judul)).replace(/\{cabang\}/g, cabNama(br.id)));
