@@ -310,13 +310,6 @@ body.has-sticky .bnav { display: none; }
 .toast.err { background: #8C1D18; } .toast.ok .mi { color: var(--wa); }
 .zoom img { width: 100%; border-radius: 16px; background: #fff; }
 
-/* ---------- PWA install ---------- */
-.pwa { position: fixed; left: 12px; right: 12px; bottom: calc(var(--nav-h) + var(--nk-h) + var(--safe-b) + 10px); z-index: 60; max-width: 480px; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--ink); color: #fff; border-radius: 18px; box-shadow: var(--sh-3); animation: up .25s; }
-.pwa img { width: 44px; height: 44px; border-radius: 12px; background: var(--amber); flex: none; }
-.pwa b { display: block; font: 700 14px var(--f-head); } .pwa span { font-size: 12px; opacity: .8; line-height: 16px; display: block; }
-.pwa .btn { min-height: 38px; padding: 0 14px; font-size: 13px; }
-.pwa .x { color: #fff; opacity: .7; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; flex: none; }
-
 /* ---------- Forms ---------- */
 .f { display: grid; gap: 12px; }
 .f2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -443,7 +436,6 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
   .det .gal { position: sticky; top: 76px; }
   .stickybar { position: static; background: none; border: 0; padding: 0; margin-top: 14px; backdrop-filter: none; }
   .stickybar .in { max-width: none; }
-  .pwa { bottom: calc(var(--nk-h) + 20px); left: auto; right: 24px; margin: 0; width: 400px; }
   .side { display: flex; flex-direction: column; width: 248px; flex: none; padding: 16px 12px; border-right: 1px solid var(--line); background: #fff; position: sticky; top: 60px; height: calc(100vh - 60px); overflow: auto; }
   .side a, .side button { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; font: 600 13px var(--f-body); color: var(--ink-2); width: 100%; text-align: left; }
   .side a:hover, .side button:hover { background: var(--canvas); color: var(--ink); }
@@ -558,3 +550,55 @@ html { overflow-x: hidden; }
 .pop-st { position: absolute; top: 22px; left: 22px; z-index: 1; }
 @media (min-width: 768px) { .mcard { flex-basis: 30%; } .menu-tiles { grid-template-columns: repeat(4, 1fr); } }
 @media (min-width: 1024px) { .kat-bar { margin: 12px -24px 0; padding: 10px 24px 8px; } .pslide-wrap { margin: 0; } .pslider { padding-left: 2px; padding-right: 2px; } }
+
+/* ==================== Revisi v3 ==================== */
+html { touch-action: manipulation; }
+html.locked { overflow: hidden; }
+html.locked body { overflow: hidden; touch-action: none; }
+.overlay { overscroll-behavior: contain; touch-action: auto; }
+.sheet { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+html.standalone, html.standalone body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+html.standalone input, html.standalone textarea, html.standalone [contenteditable] { -webkit-user-select: text; user-select: text; }
+/* tombol Install di header */
+.btn-install { margin-left: auto; height: 40px; padding: 0 12px; border-radius: var(--r); background: var(--ink); color: #fff; font: 700 12px var(--f-body); display: inline-flex; align-items: center; gap: 6px; }
+.btn-install .mi { font-size: 18px; color: var(--amber); }
+.btn-install:not([hidden]) + .btn-cs { margin-left: 8px; }
+/* lembar Bagikan */
+.share { display: grid; gap: 14px; }
+.qr-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px; border-radius: var(--r-lg); background: var(--canvas); text-align: center; }
+.qr-card b { font: 700 15px/20px var(--f-head); margin-top: 6px; }
+.qr-box { position: relative; width: min(64vw, 240px); aspect-ratio: 1; background: #fff; border-radius: 16px; padding: 6px; box-shadow: var(--sh-1); }
+.qr-box svg { width: 100%; height: 100%; display: block; }
+.qr-logo { position: absolute; left: 50%; top: 50%; width: 21%; height: 21%; transform: translate(-50%, -50%); border-radius: 50%; background: #fff; border: 3px solid #fff; object-fit: cover; }
+.link-row { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 12px; border: 1px solid var(--line); border-radius: var(--r); background: #fff; }
+.link-row .inp { border: 0; min-height: 36px; padding: 0; font-size: 13px; flex: 1; min-width: 0; background: transparent; }
+.link-row .inp:focus { border: 0; padding: 0; }
+.si-wrap { color: var(--ink-2); display: flex; } .si-wrap .si { width: 18px; height: 18px; }
+.share-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.share-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; font: 600 11px var(--f-body); color: var(--ink-2); }
+.share-btn .b { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; background: #161616; }
+.share-btn .b.whatsapp { background: #25D366; } .share-btn .b.facebook { background: #1877F2; } .share-btn .b.telegram { background: #229ED9; } .share-btn .b.x { background: #0B0B0C; }
+/* formulir nyaman di HP: tanpa zoom otomatis saat mengetik, satu kolom */
+@media (max-width: 639px) {
+  .fld input, .fld select, .fld textarea, .inp, .search input { font-size: 16px; }
+  .f2 { grid-template-columns: 1fr; gap: 12px; }
+  .sheet { padding-left: 14px; padding-right: 14px; }
+  .sheet .row > .btn { min-width: 0; }
+  .panel-h { gap: 8px; }
+  .panel-h .seg { width: 100%; }
+  .panel-h .seg button { flex: 1; }
+  .adm-h { margin-bottom: 10px; }
+  .adm-h h2 { font-size: 20px; line-height: 26px; min-width: 0; flex-basis: 100%; }
+  .tabs button { padding: 10px 10px; }
+  .li .grow { min-width: 0; }
+  .li .meta { word-break: break-word; }
+  .imgpick { flex-wrap: wrap; }
+  .imgpick .pv { width: 100%; height: 140px; }
+}
+.url-row { display: flex; gap: 8px; }
+.url-row input { flex: 1; min-width: 0; }
+/* item grid/flex tidak boleh melebar melebihi layar */
+.list > *, .f > *, .order > *, .panel > *, .li, .li .grow, .sec-row .grow { min-width: 0; }
+@media (max-width: 639px) {
+  .panel .row > .btn, .sheet .row > .btn, .panel .row > label.btn { white-space: normal; line-height: 18px; text-align: center; padding-left: 10px; padding-right: 10px; }
+}

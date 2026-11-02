@@ -247,6 +247,48 @@
     more.innerHTML = (list.length > K.n ? '<button class="btn btn-ghost" data-m style="min-width:240px">' + I('sync') + 'Muat Lebih Banyak</button>' : '') + '<span class="muted small">Menampilkan ' + Math.min(K.n, list.length) + ' dari ' + list.length + ' produk</span>';
     const m = more.querySelector('[data-m]'); if (m) m.onclick = () => { K.n += PER; renderGrid(el); };
   }
+  /* ======================= BAGIKAN: link + QR Code (unduh & pindai) ======================= */
+  A.shareSheet = function (url, judul) {
+    url = url || location.href.split('#')[0];
+    const toko = S().nama_toko || 'Acc Cell', title = judul || toko + ' — Link Bio Resmi';
+    const txt = title + '\n' + url, enc = encodeURIComponent;
+    const tujuan = [['WhatsApp', 'whatsapp', 'https://wa.me/?text=' + enc(txt)], ['Facebook', 'facebook', 'https://www.facebook.com/sharer/sharer.php?u=' + enc(url)],
+      ['Telegram', 'telegram', 'https://t.me/share/url?url=' + enc(url) + '&text=' + enc(title)], ['X', 'x', 'https://twitter.com/intent/tweet?url=' + enc(url) + '&text=' + enc(title)]];
+    let qrSvg = ''; try { qrSvg = window.QR ? QR.svg(url, { ecl: 'Q' }) : ''; } catch (e) { }
+    const o = A.sheet('<div class="share">' +
+      '<div class="qr-card"><div class="qr-box">' + qrSvg + '<img class="qr-logo" src="' + esc(logo()) + '" alt=""></div><b>' + esc(title) + '</b><span class="muted small">Pindai dengan kamera HP untuk membuka</span></div>' +
+      '<div class="link-row"><span class="si-wrap">' + A.socIcon('link') + '</span><input class="inp mono" readonly value="' + esc(url) + '" aria-label="Tautan" data-url><button class="btn btn-amber btn-sm" data-copy>' + I('content_copy') + 'Salin</button></div>' +
+      '<div class="share-grid">' + tujuan.map(t => '<a class="share-btn" href="' + esc(t[2]) + '" target="_blank" rel="noopener"><span class="b ' + t[1] + '">' + A.socIcon(t[1]) + '</span>' + t[0] + '</a>').join('') + '</div>' +
+      '<div class="row mt12"><button class="btn btn-ink grow" data-dl>' + I('download') + 'Unduh QR Code</button>' + (navigator.share ? '<button class="btn btn-ghost" data-native>' + I('share') + 'Lainnya</button>' : '') + '</div></div>', { title: 'Bagikan' });
+    o.querySelector('[data-copy]').onclick = () => { A.copy(url, 'Tautan'); o.querySelector('[data-url]').select(); };
+    o.querySelector('[data-url]').onclick = e => e.target.select();
+    const nat = o.querySelector('[data-native]'); if (nat) nat.onclick = () => navigator.share({ title, text: title, url }).catch(() => { });
+    o.querySelector('[data-dl]').onclick = async e => {
+      const btn = e.currentTarget; btn.disabled = true;
+      try {
+        const qc = await QR.canvas(url, { ecl: 'Q', size: 820, logo: logo() });
+        const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+        x.fillStyle = '#F5F5F7'; x.fillRect(0, 0, W, H);
+        x.fillStyle = '#0B0B0C'; x.fillRect(0, 0, W, 220);
+        x.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--amber').trim() || '#F9B54C';
+        x.font = '800 64px "Plus Jakarta Sans", Arial, sans-serif'; x.textAlign = 'center'; x.fillText(toko, W / 2, 125);
+        x.fillStyle = '#fff'; x.font = '500 32px Inter, Arial, sans-serif'; x.fillText('Link Bio Resmi · Nabire & Serui', W / 2, 180);
+        x.fillStyle = '#fff'; const r = 40, bx = 110, by = 280, bw = W - 220, bh = 860;
+        x.beginPath(); x.moveTo(bx + r, by); x.arcTo(bx + bw, by, bx + bw, by + bh, r); x.arcTo(bx + bw, by + bh, bx, by + bh, r); x.arcTo(bx, by + bh, bx, by, r); x.arcTo(bx, by, bx + bw, by, r); x.fill();
+        const qs = 720; x.drawImage(qc, (W - qs) / 2, by + 40, qs, qs);
+        x.fillStyle = '#0B0B0C'; x.font = '700 34px Inter, Arial, sans-serif'; x.fillText('Pindai untuk membuka', W / 2, by + 815);
+        x.fillStyle = '#6E6E73'; x.font = '500 28px Inter, Arial, sans-serif';
+        let u = url.replace(/^https?:\/\//, ''); while (x.measureText(u).width > W - 160 && u.length > 10) u = u.slice(0, -2); if (u !== url.replace(/^https?:\/\//, '')) u += '…';
+        x.fillText(u, W / 2, 1230);
+        const blob = await new Promise(res => c.toBlob(res, 'image/png'));
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'QR-' + toko.replace(/[^\w]+/g, '-') + '.png';
+        document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+        A.toast('QR Code diunduh');
+      } catch (er) { A.toast('Gagal membuat gambar QR', 'err'); }
+      btn.disabled = false;
+    };
+  };
+
   /* ======================= MENU PUBLIK (tombol "Menu") ======================= */
   A.openMenu = function () {
     const go = (h, kat) => '<a class="mtile" href="' + h + '"' + (kat !== undefined ? ' data-kat-go="' + kat + '"' : '') + '>';
@@ -262,7 +304,7 @@
       const k = e.target.closest('[data-kat-go]'); if (k) { K.kat = k.dataset.katGo; K.n = PER; const kel = document.querySelector('.page[data-page="katalog"]'); if (kel && kel.dataset.built) renderGrid(kel); }
       if (e.target.closest('a')) { o.close(); if (k && A.cur === 'katalog') A.scrollY(0); }
       if (e.target.closest('[data-m-cs]')) { o.close(); A.pickBranch(b => 'Halo Admin Acc Cell ' + cabNama(b.id) + ', saya ingin bertanya.'); }
-      if (e.target.closest('[data-m-share]')) { o.close(); const url = location.href.split('#')[0]; if (navigator.share) navigator.share({ title: S().nama_toko || 'Acc Cell', url }).catch(() => { }); else A.copy(url, 'Tautan'); }
+      if (e.target.closest('[data-m-share]')) { o.close(); A.shareSheet(); }
       const w = e.target.closest('[data-wa-any]'); if (w) { e.preventDefault(); o.close(); A.pickBranch(b => 'Halo Admin Acc Cell ' + cabNama(b.id) + ', saya ingin bertanya.'); }
     });
   };
@@ -313,10 +355,7 @@
       let pilihWarna = warna[0] || '';
       el.querySelector('[data-back]').onclick = e => { e.preventDefault(); A._fromDetail = true; A.go('katalog'); };
       el.querySelector('[data-cta]').onclick = () => sold ? askProduct(p) : orderProduct(p, pilihWarna);
-      el.querySelector('[data-share]').onclick = () => {
-        const url = location.href.split('#')[0] + '#/produk/' + encodeURIComponent(p.id);
-        if (navigator.share) navigator.share({ title: p.nama, text: p.nama + ' — ' + rp(p.harga) + ' di Acc Cell', url }).catch(() => { }); else A.copy(url, 'Tautan produk');
-      };
+      el.querySelector('[data-share]').onclick = () => A.shareSheet(location.href.split('#')[0] + '#/produk/' + encodeURIComponent(p.id), p.nama + ' — ' + rp(p.harga));
       el.querySelectorAll('[data-w]').forEach(b => b.onclick = () => { pilihWarna = b.dataset.w; el.querySelectorAll('[data-w]').forEach(x => x.classList.toggle('on', x === b)); el.querySelector('[data-wl]').textContent = pilihWarna; });
       const gal = el.querySelector('[data-gal]'), cnt = el.querySelector('[data-cnt]');
       gal.addEventListener('scroll', A.debounce(() => { const i = Math.round(gal.scrollLeft / gal.clientWidth); if (cnt) cnt.textContent = (i + 1) + ' / ' + foto.length; el.querySelectorAll('[data-th]').forEach(t => t.classList.toggle('on', +t.dataset.th === i)); }, 50), { passive: true });

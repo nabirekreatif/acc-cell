@@ -103,6 +103,7 @@ Bila yang tampil masih versi lama, tekan **Ctrl+Shift+R**.
 6. **Profil & Urutan** → setiap bagian link bio (Profil, Slide Hero, Kartu Promo, Tombol Menu, **Slide Produk Pilihan**, Sosial Media, Cabang) bisa digeser naik/turun dengan ▲▼, dinyalakan/dimatikan dengan saklar, dan diubah isinya lewat tombol **Atur**. Klik **Simpan Urutan** setelah mengubah urutan.
    - **Slide Produk Pilihan** menampilkan produk acak (yang tersedia) yang bisa digeser, plus tombol **Lihat semua**. Judul dan jumlahnya diatur lewat **Atur**.
    - **Sosial media** punya 2 gaya: **Tombol lebar** atau **Ikon bulat**. Pilih di **Cabang & Sosmed**, atau lewat **Atur** pada bagian Sosial Media.
+   - Menambah sosial media dari HP: pilih platform, lalu cukup ketik **@username** (atau tekan **Tempel**). Tautan lengkap dibuat otomatis dan tampil sebelum disimpan.
 7. **Pop-up Promo** dan **Slide Hero** → atur promo. Pop-up bisa dinyalakan atau dimatikan kapan saja.
 8. Pasang link website di bio TikTok, Instagram, Facebook, dan WhatsApp Business.
 
@@ -156,11 +157,18 @@ Dasbor → **Migrasi Data** → tempel URL spreadsheet lama → pilih data → *
 - Gunakan **akun Google yang sama** agar foto Drive lama tetap tampil.
 - Tersedia juga **Import produk dari CSV** (ada template).
 
-## 9. Pasang sebagai aplikasi (PWA)
+## 9. Pasang sebagai aplikasi (PWA) & bagikan link
 
-- Android/Chrome: muncul kartu **"Pasang Aplikasi Acc Cell"**. Ketuk **Pasang**.
-- iPhone: kartu berisi petunjuk *Bagikan → Tambah ke Layar Utama*.
-- Kartu **hilang otomatis** setelah aplikasi terpasang, atau setelah diklik/ditutup sekali, dan tidak muncul lagi.
+- **Tombol Install** ada di header, di sebelah tombol CS.
+  - Android/Chrome: ketuk **Install** → **Pasang**. Tombol **hilang otomatis** setelah aplikasi terpasang, dan tidak tampil saat link bio dibuka dari aplikasi yang sudah terpasang.
+  - iPhone: tombol menampilkan petunjuk *Bagikan → Tambah ke Layar Utama*.
+- Saat dibuka sebagai aplikasi terpasang, **zoom layar dimatikan** agar tampilan rapi seperti aplikasi biasa.
+- Saat pop-up atau menu terbuka, halaman di belakangnya **tidak ikut tergulir**.
+- **Menu → Bagikan** menampilkan:
+  - **QR Code** yang bisa dipindai langsung dari layar atau **diunduh** sebagai gambar PNG berbingkai, siap dicetak atau ditempel di toko.
+  - Tautan yang bisa **disalin**.
+  - Tombol bagikan ke **WhatsApp, Facebook, Telegram, X**, dan aplikasi lain.
+- Tombol bagikan di halaman detail produk memakai lembar yang sama, jadi QR-nya langsung membuka produk tersebut.
 
 ## 10. Lisensi template (Nabire Kreatif)
 

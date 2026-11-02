@@ -168,7 +168,7 @@
     else if (f.type === 'select') inp = '<select id="' + id + '" name="' + f.k + '"' + (f.ro ? ' disabled' : '') + '>' + f.opts.map(o => { const ov = Array.isArray(o) ? o[0] : o, ol = Array.isArray(o) ? o[1] : o; return '<option value="' + esc(ov) + '"' + (String(ov) === String(val) ? ' selected' : '') + '>' + esc(ol) + '</option>'; }).join('') + '</select>';
     else if (f.type === 'switch') return '<label class="row" style="justify-content:space-between;padding:6px 0"><span><b style="font:600 14px var(--f-body)">' + esc(f.t) + '</b>' + (f.hint ? '<div class="hint muted small">' + esc(f.hint) + '</div>' : '') + '</span><span class="switch"><input type="checkbox" name="' + f.k + '"' + (val === true || String(val).toUpperCase() === 'YA' || val === 'TRUE' ? ' checked' : '') + '><i></i></span></label>';
     else if (f.type === 'image') return '<div class="fld"><span>' + esc(f.t) + '</span><div class="imgpick"><div class="pv" data-pv style="background-image:url(\'' + esc(img(val, 300)) + '\')"></div><div class="grow f" style="gap:6px"><input name="' + f.k + '" value="' + esc(val) + '" placeholder="URL gambar atau unggah →" class="inp" style="min-height:38px;font-size:13px"><label class="btn btn-ghost btn-sm" style="align-self:flex-start">' + I('upload') + 'Unggah gambar<input type="file" accept="image/*" hidden data-up="' + f.k + '" data-folder="' + (f.folder || 'Banner') + '"></label></div></div>' + (f.hint ? '<div class="hint">' + esc(f.hint) + '</div>' : '') + '</div>';
-    else inp = '<input id="' + id + '" name="' + f.k + '" type="' + (f.type === 'number' ? 'text' : (f.type || 'text')) + '"' + (f.type === 'number' || f.type === 'money' ? ' inputmode="numeric"' : '') + ' value="' + esc(f.type === 'money' && val ? String(val).replace(/\B(?=(\d{3})+(?!\d))/g, '.') : val) + '"' + (f.ro ? ' disabled' : '') + (f.req ? ' required' : '') + ' placeholder="' + esc(f.ph || '') + '"' + (f.max ? ' maxlength="' + f.max + '"' : '') + '>';
+    else inp = '<input id="' + id + '" name="' + f.k + '" type="' + (f.type === 'number' || f.type === 'url' ? 'text' : (f.type || 'text')) + '"' + (f.type === 'number' || f.type === 'money' ? ' inputmode="numeric"' : '') + ' value="' + esc(f.type === 'money' && val ? String(val).replace(/\B(?=(\d{3})+(?!\d))/g, '.') : val) + '"' + (f.ro ? ' disabled' : '') + (f.req ? ' required' : '') + ' placeholder="' + esc(f.ph || '') + '"' + (f.max ? ' maxlength="' + f.max + '"' : '') + (f.type === 'url' || f.type === 'email' ? ' autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="' + f.type + '"' : '') + '>';
     return '<div class="fld"><label for="' + id + '">' + esc(f.t) + (f.req ? ' *' : '') + '</label>' + inp + (f.hint ? '<div class="hint">' + esc(f.hint) + '</div>' : '') + '</div>';
   }
   function form(spec, v) {
@@ -460,7 +460,7 @@
     const edit = rec => {
       const o = A.sheet('<form class="f">' + form(cfg.spec, rec || cfg.def || {}) + '<div class="row"><button type="button" class="btn btn-ghost" data-x>Batal</button><button class="btn btn-ink grow" data-save>' + I('save') + 'Simpan</button></div></form>', { title: rec ? 'Ubah' : (cfg.addText || 'Tambah'), lg: cfg.lg });
       const f = o.querySelector('form'); bindUploads(f); if (cfg.onForm) cfg.onForm(f);
-      f.onsubmit = async e => { e.preventDefault(); const d = read(f, cfg.spec); const fid = f.querySelector('[data-file-id]'); if (fid) d.file_id = fid.dataset.fileId; if (rec) d.id = rec.id; const r = await save(d, f.querySelector('[data-save]')); if (r.success) o.close(); };
+      f.onsubmit = async e => { e.preventDefault(); const d = read(f, cfg.spec); if (cfg.prep) { const er = cfg.prep(d); if (er) return A.toast(er, 'err'); } const fid = f.querySelector('[data-file-id]'); if (fid) d.file_id = fid.dataset.fileId; if (rec) d.id = rec.id; const r = await save(d, f.querySelector('[data-save]')); if (r.success) o.close(); };
     };
     box.onclick = async e => {
       const ed = e.target.closest('[data-e]'), del = e.target.closest('[data-d]'), up = e.target.closest('[data-u]');
@@ -524,11 +524,37 @@
     drawG(gaya0);
     gw.querySelector('[data-gy]').onclick = async e => { const b = e.target.closest('[data-v]'); if (!b) return; gw.querySelectorAll('[data-gy] button').forEach(x => x.classList.toggle('on', x === b)); drawG(b.dataset.v); await saveSet({ sosmed_gaya: b.dataset.v }); };
     const soc = document.createElement('div'); m.querySelector('[data-soc]').appendChild(soc);
-    crudList(soc, { title: 'Sosial Media Resmi', key: 'socials', save: 'saveSocial', del: 'deleteSocial', addText: 'Tambah Kanal', order: 1,
-      spec: [{ k: 'platform', t: 'Platform', type: 'select', half: 1, opts: ['TikTok', 'Instagram', 'Facebook', 'WhatsApp', 'YouTube', 'Shopee', 'Tokopedia', 'Website'] }, { k: 'label', t: 'Label / akun', half: 1, ph: '@counter.accell' }, { k: 'url', t: 'Tautan', ph: 'https://… (WhatsApp: isi #wa untuk pilih cabang)' }],
+    crudList(soc, { title: 'Sosial Media Resmi', key: 'socials', save: 'saveSocial', del: 'deleteSocial', addText: 'Tambah Kanal', order: 1, def: { platform: 'Instagram' },
+      spec: [{ k: 'platform', t: 'Platform', type: 'select', opts: ['TikTok', 'Instagram', 'Facebook', 'WhatsApp', 'YouTube', 'Shopee', 'Tokopedia', 'Website'] },
+        { k: 'url', t: 'Username atau tautan', type: 'url', ph: '@namaakun atau https://…', hint: 'Cukup ketik @username — tautan lengkap dibuat otomatis. WhatsApp: kosongkan untuk pilihan admin Nabire/Serui.' },
+        { k: 'label', t: 'Teks kecil di bawah nama (opsional)', ph: 'Otomatis dari username' }],
+      onForm: f => {
+        const u = f.querySelector('[name="url"]'), sel = f.querySelector('[name="platform"]'), wrap = document.createElement('div'); wrap.className = 'url-row';
+        u.parentNode.insertBefore(wrap, u); wrap.appendChild(u);
+        if (navigator.clipboard && navigator.clipboard.readText) { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn btn-ghost btn-sm'; b.innerHTML = I('content_paste') + 'Tempel'; wrap.appendChild(b); b.onclick = async () => { try { u.value = (await navigator.clipboard.readText()).trim(); u.dispatchEvent(new Event('input')); } catch (e) { A.toast('Izinkan akses papan klip, atau tempel manual (tekan lama di kolom)', 'info'); u.focus(); } }; }
+        const pv = document.createElement('div'); pv.className = 'hint'; pv.style.wordBreak = 'break-all'; wrap.parentNode.appendChild(pv);
+        const upd = () => { const r = normSoc(sel.value, u.value); pv.innerHTML = r.url ? 'Tautan: <b>' + esc(r.url === '#wa' ? 'Pilih admin Nabire / Serui' : r.url) + '</b>' : ''; };
+        u.addEventListener('input', upd); sel.addEventListener('change', upd); upd();
+      },
+      prep: d => { const r = normSoc(d.platform, d.url); if (!r.url) return 'Isi username atau tautan.'; d.url = r.url; if (!d.label) d.label = r.label; },
       item: r => '<span class="avatar-i">' + I('public') + '</span><div class="grow"><b>' + esc(r.platform) + '</b><div class="meta ell">' + esc(r.label) + ' · ' + esc(r.url) + '</div></div>' });
     soc.querySelector('.adm-h').style.marginTop = '24px';
   };
+
+  /** Ubah "@username" / tautan pendek menjadi URL lengkap sesuai platform. */
+  function normSoc(platform, v) {
+    const k = String(platform || '').toLowerCase(); v = String(v || '').trim();
+    if (k === 'whatsapp') {
+      if (!v || v === '#wa') return { url: '#wa', label: 'Admin Nabire & Serui' };
+      if (/^[+\d\s-]{8,}$/.test(v)) { const n = A.hp62(v); return { url: 'https://wa.me/' + n, label: A.hp08(v) }; }
+    }
+    if (!v) return { url: '', label: '' };
+    if (/^https?:\/\//i.test(v)) { const h = v.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, ''); const m = h.match(/\/@?([\w.\-]+)\/?$/); return { url: v, label: m ? (/tiktok|instagram|youtube/.test(h) ? '@' : '') + m[1] : h.split('/')[0] }; }
+    if (/^[\w-]+(\.[\w-]+)+(\/.*)?$/.test(v) && !/^@/.test(v) && /\.(com|id|net|org|co|me|app|site|store|shop|my)(\/|$)/i.test(v)) return { url: 'https://' + v, label: v.replace(/^www\./, '') };
+    const h = v.replace(/^@/, '').replace(/\s+/g, '');
+    const base = { tiktok: 'https://www.tiktok.com/@', instagram: 'https://www.instagram.com/', facebook: 'https://www.facebook.com/', youtube: 'https://www.youtube.com/@', shopee: 'https://shopee.co.id/', tokopedia: 'https://www.tokopedia.com/', website: 'https://' }[k] || 'https://';
+    return { url: base + h, label: (/tiktok|instagram|youtube/.test(k) ? '@' : '') + h };
+  }
 
   /* ======================= PENGGUNA ======================= */
   VIEWS.pengguna = function (m) {

@@ -35,6 +35,9 @@
     whatsapp: '<path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21"/><path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1"/>',
     website: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
     shopee: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+    telegram: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+    x: '<path d="M4 4l16 16M20 4 4 20"/>',
+    link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
     tokopedia: '<path d="m2 7 4.4-4.4A2 2 0 0 1 7.8 2h8.4a2 2 0 0 1 1.4.6L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M2 7h20v3a2 2 0 0 1-2 2 3 3 0 0 1-2-1 3 3 0 0 1-4 0 3 3 0 0 1-4 0 3 3 0 0 1-4 0 3 3 0 0 1-2 1 2 2 0 0 1-2-2z"/>'
   };
   const socIcon = k => '<svg class="si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (SVG[k] || SVG.website) + '</svg>';
@@ -184,17 +187,36 @@
     t.innerHTML = I(type === 'err' ? 'error' : type === 'info' ? 'info' : 'check_circle') + '<div>' + esc(msg) + '</div>';
     box.appendChild(t); setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, type === 'err' ? 5000 : 2600);
   };
+  /* Kunci gulir halaman di belakang pop-up/menu (iOS & Android). */
+  let lockN = 0, lockY = 0;
+  App.lockScroll = function () {
+    if (lockN++ > 0) return;
+    lockY = window.scrollY;
+    const b = document.body.style;
+    document.documentElement.classList.add('locked');
+    b.position = 'fixed'; b.top = -lockY + 'px'; b.left = '0'; b.right = '0'; b.width = '100%';
+  };
+  App.unlockScroll = function () {
+    if (lockN === 0 || --lockN > 0) return;
+    const b = document.body.style;
+    document.documentElement.classList.remove('locked');
+    b.position = ''; b.top = ''; b.left = ''; b.right = ''; b.width = '';
+    App.scrollY(lockY);
+  };
   App.sheet = function (html, opt) {
     opt = opt || {};
     const o = document.createElement('div');
     o.className = 'overlay' + (opt.center ? ' center' : ''); o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true');
     o.innerHTML = '<div class="sheet' + (opt.lg ? ' lg' : '') + '">' + (opt.center ? '' : '<div class="grab"></div>') +
       (opt.title ? '<div class="sheet-h"><h3>' + esc(opt.title) + '</h3><button class="icon-btn" data-x aria-label="Tutup">' + I('close') + '</button></div>' : '') + html + '</div>';
-    const close = () => { if (!o.isConnected) return; o.remove(); document.removeEventListener('keydown', onKey); if (opt.onClose) opt.onClose(); };
+    const close = () => { if (!o.isConnected) return; o.remove(); document.removeEventListener('keydown', onKey); if (!o._unlocked) { o._unlocked = 1; App.unlockScroll(); } if (opt.onClose) opt.onClose(); };
     const onKey = e => { if (e.key === 'Escape') close(); };
     o.addEventListener('click', e => { if (e.target === o || e.target.closest('[data-x]')) close(); });
     document.addEventListener('keydown', onKey);
     document.body.appendChild(o);
+    App.lockScroll();
+    // elemen dihapus langsung (o.remove()) tetap membuka kunci gulir
+    new MutationObserver((m, obs) => { if (!o.isConnected) { obs.disconnect(); if (!o._unlocked) { o._unlocked = 1; App.unlockScroll(); } } }).observe(document.body, { childList: true });
     o.close = close;
     const s = o.querySelector('.sheet'); if (s) s.scrollTop = 0;
     return o;
@@ -248,27 +270,35 @@
   addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushTrack(); });
   addEventListener('pagehide', flushTrack);
 
-  /* ---------------- PWA: pasang aplikasi ---------------- */
+  /* ---------------- PWA: tombol "Install" di header (hilang otomatis bila sudah terpasang) ---------------- */
   let deferred = null;
-  const PWA_KEY = 'pwa:selesai';
+  const PWA_KEY = 'pwa:terpasang';
   const isStandalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
-  const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
-  function pwaDone() { Store.set(PWA_KEY, Date.now()); const b = $('#pwa'); if (b) b.remove(); }
-  function showPwa(ios) {
-    if (isStandalone() || Store.get(PWA_KEY, 0) || $('#pwa') || App.mode === 'admin') return;
-    const b = document.createElement('div'); b.id = 'pwa'; b.className = 'pwa'; b.setAttribute('role', 'dialog');
-    b.innerHTML = '<img src="assets/icon-192.png" alt=""><div class="grow"><b>Pasang Aplikasi Acc Cell</b><span>' +
-      (ios ? 'Ketuk ' + I('ios_share') + ' Bagikan lalu “Tambah ke Layar Utama”.' : 'Buka katalog & rekening resmi lebih cepat, langsung dari layar HP.') + '</span></div>' +
-      (ios ? '' : '<button class="btn btn-amber" data-pwa-ok>' + I('download') + 'Pasang</button>') + '<button class="x" data-pwa-x aria-label="Tutup">' + I('close') + '</button>';
-    document.body.appendChild(b);
-    b.addEventListener('click', async e => {
-      if (e.target.closest('[data-pwa-x]')) return pwaDone();
-      if (e.target.closest('[data-pwa-ok]') && deferred) { const d = deferred; deferred = null; pwaDone(); d.prompt(); try { await d.userChoice; } catch (er) { } }
-    });
+  const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  App.isStandalone = isStandalone;
+  function installBtn(show) { const b = $('[data-install]'); if (b) b.hidden = !show || isStandalone() || App.mode === 'admin'; }
+  App.installBtn = installBtn;
+  addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; Store.del(PWA_KEY); installBtn(true); });
+  addEventListener('appinstalled', () => { deferred = null; Store.set(PWA_KEY, Date.now()); installBtn(false); App.toast('Aplikasi Acc Cell terpasang di HP Anda'); });
+  App.install = async function () {
+    if (deferred) {
+      const d = deferred; deferred = null; d.prompt();
+      try { const r = await d.userChoice; if (r && r.outcome === 'accepted') { Store.set(PWA_KEY, Date.now()); installBtn(false); } else { deferred = d; } } catch (er) { }
+      return;
+    }
+    App.sheet('<div class="center"><img src="assets/icon-192.png" alt="" style="width:72px;height:72px;border-radius:18px;margin:0 auto 12px"><p style="margin:0 0 14px;line-height:21px">' +
+      (isIOS() ? 'Di Safari: ketuk tombol <b>Bagikan</b> ' + I('ios_share') + ' lalu pilih <b>“Tambah ke Layar Utama”</b>.' : 'Buka menu browser <b>⋮</b> lalu pilih <b>“Instal aplikasi”</b> atau <b>“Tambahkan ke layar utama”</b>.') +
+      '</p><button class="btn btn-ink btn-block" data-x>Mengerti</button></div>', { center: true, title: 'Pasang Aplikasi Acc Cell' });
+  };
+  /* Mode aplikasi terpasang: matikan zoom agar tampilan rapi seperti aplikasi asli */
+  function noZoom() {
+    if (!isStandalone()) return;
+    document.documentElement.classList.add('standalone');
+    const m = $('meta[name=viewport]'); if (m) m.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
+    ['gesturestart', 'gesturechange'].forEach(n => document.addEventListener(n, e => e.preventDefault(), { passive: false }));
+    document.addEventListener('touchmove', e => { if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive: false });
+    let last = 0; document.addEventListener('touchend', e => { const t = Date.now(); if (t - last < 300 && !e.target.closest('input,textarea,select')) e.preventDefault(); last = t; }, { passive: false });
   }
-  addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; setTimeout(() => showPwa(false), 2500); });
-  addEventListener('appinstalled', pwaDone);
-  App.on('route', n => { const b = $('#pwa'); if (b) b.hidden = n === 'admin'; });
   if ('serviceWorker' in navigator && location.protocol === 'https:' && window.ACC_MODE !== 'admin') addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
 
   /* ---------------- bilah lisensi: geser elemen bawah agar tidak tertutup ---------------- */
@@ -304,7 +334,9 @@
     App.warmUp();
     if (App.mode !== 'admin') App.track('kunjungan');
     if (Store.ss('visit') !== '1') { Store.ss('visit', '1'); }
-    if (isIOS() && !isStandalone()) setTimeout(() => showPwa(true), 4000);
+    noZoom();
+    installBtn(isIOS() && !isStandalone());           // iOS tidak punya prompt otomatis: tampilkan tombol berisi petunjuk
+    if (window.matchMedia) { const mq = matchMedia('(display-mode: standalone)'); if (mq.addEventListener) mq.addEventListener('change', () => { installBtn(false); noZoom(); }); }
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') { const away = Date.now() - (App._hiddenAt || Date.now()); if (away > 120000) { App.warmUp(); App.loadPublic(); } }
       else App._hiddenAt = Date.now();
