@@ -100,7 +100,7 @@ Bila yang tampil masih versi lama, tekan **Ctrl+Shift+R**.
 3. **Cabang & Sosmed** → periksa alamat, nomor WA admin (Nabire 082197649558, Serui 081248245606), dan link Google Maps. Untuk peta mini: Google Maps → Bagikan → Sematkan peta → Salin HTML → tempel.
 4. **Admin & Akses** → buat akun **admin_nabire** dan **admin_serui** (isi nomor WA agar ikut menerima notifikasi). Admin cabang hanya bisa mengelola produk cabangnya sendiri.
 5. **Produk** → hapus produk contoh atau ganti dengan foto asli. Foto otomatis dikompres sebelum diunggah ke Drive.
-6. **Profil & Urutan** → setiap bagian link bio (Profil, Slide Hero, Kartu Promo, Tombol Menu, **Slide Produk Pilihan**, Sosial Media, Cabang) bisa digeser naik/turun dengan ▲▼, dinyalakan/dimatikan dengan saklar, dan diubah isinya lewat tombol **Atur**. Klik **Simpan Urutan** setelah mengubah urutan.
+6. **Tampilan & Teks → Bagian Link Bio** → setiap bagian link bio (Profil, Slide Hero, Kartu Promo, Tombol Menu, **Slide Produk Pilihan**, Sosial Media, Cabang) bisa digeser naik/turun dengan ▲▼, dinyalakan/dimatikan dengan saklar, dan diubah isinya lewat tombol **Atur**. Klik **Simpan Urutan** setelah mengubah urutan.
    - **Slide Produk Pilihan** menampilkan produk acak (yang tersedia) yang bisa digeser, plus tombol **Lihat semua**. Judul dan jumlahnya diatur lewat **Atur**.
    - **Sosial media** punya 2 gaya: **Tombol lebar** atau **Ikon bulat**. Pilih di **Cabang & Sosmed**, atau lewat **Atur** pada bagian Sosial Media.
    - Menambah sosial media dari HP: pilih platform, lalu cukup ketik **@username** (atau tekan **Tempel**). Tautan lengkap dibuat otomatis dan tampil sebelum disimpan.
@@ -108,6 +108,32 @@ Bila yang tampil masih versi lama, tekan **Ctrl+Shift+R**.
 8. Pasang link website di bio TikTok, Instagram, Facebook, dan WhatsApp Business.
 
 > Di halaman publik, tombol **Menu** (navigasi bawah) membuka semua menu untuk pengunjung: Beranda, Semua Produk, HP Baru, HP Second, Aksesoris, Rekening & QRIS, Servis & Tukar Tambah, Chat Admin, Bagikan, dan sosial media. Katalog punya tombol **Filter** (lokasi toko, kategori, urutan harga/terbaru, sembunyikan stok habis).
+
+---
+
+## 4b. Atur SEMUA tampilan link bio (menu **Tampilan & Teks**)
+
+Template ini bisa dipakai untuk jenis usaha apa pun (toko HP, kuliner, fesyen, jasa, dll). Menu **Tampilan & Teks** punya 4 tab. Setiap tab punya tombol **Simpan**, dan perubahan langsung tampil di link bio. Pengunjung yang sedang membuka situs akan melihatnya paling lambat ±1 menit kemudian.
+
+| Tab | Yang bisa diatur |
+|---|---|
+| **Bagian Link Bio** | Urutan bagian (▲▼), saklar on/off, dan isi tiap bagian lewat **Atur**. Pada **Tombol Menu** tiap tombol (Katalog, Rekening, Layanan, **Lokasi**) bisa dinyalakan/dimatikan sendiri-sendiri, serta diganti judul, keterangan, dan ikonnya. Pada **Lokasi Toko** bisa diatur judul, jumlah cabang yang tampil, dan teks tombol. |
+| **Header & Navigasi** | Saklar header on/off, logo header, nama di header (misalnya nama usaha Anda), serta tombol **CS**, **Install**, dan **Mode gelap** (masing-masing on/off + teks). Ada juga saklar **navigasi bawah HP** dan **menu header desktop**. Daftar tombol navigasi bisa diganti nama dan ikonnya, diurutkan, dan dinyalakan/dimatikan (HP menampilkan maksimal 5 tombol). Ada pratinjau langsung. |
+| **Warna & Tema** | 8 pilihan warna cepat, atau atur sendiri 11 warna (tombol utama, teks, latar, kartu, garis, header, harga, tombol WA, tombol sosmed). Ada tombol **Kembalikan bawaan**, tema bawaan untuk pengunjung (terang / gelap / ikuti HP), dan saklar tombol mode gelap. |
+| **Teks & Label** | Semua tulisan katalog dan detail produk: **daftar kategori** (dipisahkan koma), sebutan barang, label spesifikasi (Merek, RAM, Memori, …), tombol pesan, label tersedia/habis, kartu jaminan, dan **pesan WhatsApp otomatis**. Juga teks halaman Rekening, Layanan, Lokasi, footer, dan deskripsi SEO. |
+
+Tips:
+- Isi tanda **-** (minus) pada kolom yang punya keterangan "untuk menyembunyikan" bila tulisan itu tidak perlu. Contoh: usaha kuliner bisa menyembunyikan label "RAM" dan "Memori".
+- Kosongkan kolom teks untuk kembali ke tulisan bawaan.
+- Pengunjung bisa memilih mode gelap/terang sendiri lewat tombol di header. Pilihannya tersimpan di HP mereka.
+
+### Lokasi toko lebih dari 2 cabang
+Buka **Cabang & Sosmed** → **Tambah**. Nama dan nomor WA wajib diisi; alamat, jam buka, link Maps, dan peta mini boleh diisi menyusul. Cabang baru otomatis muncul di halaman **Lokasi**, filter katalog, pilihan cabang produk, akun admin cabang, dan pilihan "chat cabang". Cabang tidak bisa dihapus bila masih dipakai produk atau akun admin; pindahkan dulu ke cabang lain.
+
+Di link bio, bagian Lokasi menampilkan beberapa cabang beserta tombol **Lihat semua**. Tombol ini membuka halaman **Lokasi Toko** berisi semua cabang dan **kolom pencarian** (bisa mencari berdasarkan nama, kota, atau alamat).
+
+### Slide Hero & Pop-up: dengan atau tanpa link
+Saat mengedit slide, pilih **Tujuan saat diklik**: halaman di situs (Katalog / Rekening / Layanan / Lokasi), **Link manual (URL)** (misalnya `https://...`, terbuka di tab baru), atau **Tanpa link** (slide hanya gambar).
 
 ---
 
@@ -180,6 +206,13 @@ Dasbor → **Migrasi Data** → tempel URL spreadsheet lama → pilih data → *
 
 ---
 
+## Update dari versi sebelumnya (v3 → v4)
+
+1. Di Apps Script, ganti isi **Kode.gs**, **Notifikasi.gs**, dan **Migrasi.gs** dengan berkas baru (CRM.gs tidak berubah).
+2. Jalankan **`setupAplikasi()`** sekali. Fungsi ini aman diulang: hanya menambah kolom baru `kota` di sheet Cabang dan pengaturan baru, tanpa menghapus data.
+3. **Deploy → Kelola deployment → Edit → Versi baru → Deploy** (URL tetap sama).
+4. Timpa semua berkas frontend dengan isi ZIP baru (tetap pakai `js/config.js` lama yang sudah berisi URL), lalu `git add .` → `git commit -m "v4"` → `git push`. Buka situs dan tekan **Ctrl+Shift+R**.
+
 ## Pemecahan masalah
 
 | Gejala | Penyebab & solusi |
@@ -190,6 +223,7 @@ Dasbor → **Migrasi Data** → tempel URL spreadsheet lama → pilih data → *
 | Login terkunci 15 menit | Lima kali salah sandi. Tunggu, atau superadmin melakukan reset. |
 | Gambar gagal diunggah | Kebijakan Google Workspace melarang berbagi publik. Minta admin Workspace mengizinkan berbagi "Siapa saja yang memiliki link". |
 | WA tidak terkirim | Cek token dan status perangkat Fonnte (harus `connect`), lihat tab **Antrean**, lalu jalankan `pasangTrigger()`. |
+| Warna/teks baru belum tampil | Tunggu ±1 menit atau muat ulang halaman. Pastikan backend sudah *Versi baru* v4. |
 | Halaman terkunci "Template tidak berlisensi" | Ada berkas tersegel yang diubah, atau hosting mengubah berkas. Unggah ulang berkas asli. |
 
 ## Batasan yang perlu diketahui

@@ -25,7 +25,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..24,400..500,0..1,0&amp;icon_names=account_balance,account_balance_wallet,account_circle,add,add_a_photo,apps,arrow_back,arrow_downward,arrow_forward,arrow_upward,block,build_circle,campaign,cell_tower,chat,check_circle,chevron_left,chevron_right,close,cloud_off,contacts,content_copy,content_paste,delete,domain,done_all,download,edit,error,forum,gpp_maybe,group,headphones,help,history,home,hourglass_top,inbox,info,install_mobile,inventory_2,ios_share,key,lightbulb,location_on,lock,lock_reset,login,logout,mail,manage_accounts,mark_chat_read,menu,merge,move_up,music_note,near_me,new_releases,open_in_new,person,person_add,person_search,photo_camera,play_arrow,public,published_with_changes,qr_code_2,qr_code_scanner,recycling,redeem,refresh,replay,rocket_launch,save,schedule,search,search_off,sell,send,settings,share,shield,shield_person,shopping_bag,smart_display,smartphone,space_dashboard,stop,storefront,support_agent,swap_horizontal_circle,sync,thumb_up,touch_app,tune,upload,upload_file,verified,verified_user,view_carousel,view_week,visibility,visibility_off,warning,widgets&amp;display=block">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..24,400..500,0..1,0&amp;icon_names=account_balance,account_balance_wallet,account_circle,add,add_a_photo,apps,arrow_back,arrow_downward,arrow_forward,arrow_upward,block,build_circle,call,campaign,category,cell_tower,chat,check_circle,checkroom,chevron_left,chevron_right,close,cloud_off,computer,construction,contacts,content_copy,content_cut,content_paste,dark_mode,delete,diamond,directions_car,domain,done_all,download,edit,error,event,expand_more,favorite,fitness_center,forum,gpp_maybe,grid_view,group,headphones,help,history,home,home_repair_service,hotel,hourglass_top,inbox,info,install_mobile,inventory_2,ios_share,key,light_mode,lightbulb,list_alt,local_cafe,local_laundry_service,local_shipping,location_off,location_on,lock,lock_reset,login,logout,mail,manage_accounts,map,mark_chat_read,medical_services,menu,menu_bayar_sub,menu_layanan_sub,menu_lokasi_sub,merge,move_up,music_note,near_me,new_releases,open_in_new,person,person_add,person_search,pets,photo_camera,play_arrow,print,public,published_with_changes,qr_code_2,qr_code_scanner,recycling,redeem,refresh,replay,restaurant,rocket_launch,save,schedule,school,search,search_off,sell,send,settings,share,shield,shield_person,shopping_bag,shopping_cart,smart_display,smartphone,spa,space_dashboard,star,stop,storefront,support_agent,swap_horizontal_circle,sync,thumb_up,touch_app,tune,two_wheeler,upload,upload_file,verified,verified_user,view_carousel,view_week,visibility,visibility_off,warning,web,widgets&amp;display=block">
   <link rel="stylesheet" href="css/style.css">
   <script src="js/config.js" defer></script>
   <script src="js/demo-data.js" defer></script>
@@ -42,11 +42,12 @@
         <img src="assets/logo.png" alt="" width="38" height="38">
         <b data-brand>Acc Cell</b>
       </a>
-      <nav class="top-desk" aria-label="Navigasi">
-        <a href="#/" data-nav="bio">Beranda</a><a href="#/katalog" data-nav="katalog">Katalog</a><a href="#/layanan" data-nav="layanan">Servis</a><a href="#/bayar" data-nav="bayar">Bayar</a><a href="#" data-menu>Menu</a>
-      </nav>
+      <nav class="top-desk" aria-label="Navigasi" data-topnav></nav>
+      <span class="top-actions">
+      <button class="icon-btn btn-theme" data-theme-toggle type="button" aria-label="Mode gelap / terang" hidden><span class="mi" aria-hidden="true">dark_mode</span></button>
       <button class="btn-install" data-install type="button" hidden aria-label="Pasang aplikasi"><span class="mi" aria-hidden="true">install_mobile</span><span>Install</span></button>
       <button class="btn-cs" data-cs type="button" aria-label="Chat customer service"><span class="mi" aria-hidden="true">chat</span>CS</button>
+      </span>
     </div>
   </header>
 
@@ -54,13 +55,7 @@
   <footer class="sitefoot"><div class="nk-copy" data-nk-copy>© Nabire Kreatif · <a href="https://nabirekreatif.vercel.app">Nabirekreatif.com</a></div></footer>
 
   <nav class="bnav" id="pubnav" aria-label="Menu utama">
-    <div class="bnav-in">
-      <a href="#/" data-nav="bio"><span class="mi" aria-hidden="true">storefront</span>Beranda</a>
-      <a href="#/katalog" data-nav="katalog"><span class="mi" aria-hidden="true">smartphone</span>Katalog</a>
-      <a href="#/layanan" data-nav="layanan"><span class="mi" aria-hidden="true">build_circle</span>Servis</a>
-      <a href="#/bayar" data-nav="bayar"><span class="mi" aria-hidden="true">qr_code_scanner</span>Bayar</a>
-      <a href="#" data-menu><span class="mi" aria-hidden="true">menu</span>Menu</a>
-    </div>
+    <div class="bnav-in"></div>
   </nav>
 
   <div class="toasts" id="toasts" aria-live="polite"></div>

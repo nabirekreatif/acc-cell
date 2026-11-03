@@ -21,7 +21,13 @@
   const hashStr = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h + ':' + s.length; };
   const debounce = (fn, ms) => { let t; return function () { const a = arguments; clearTimeout(t); t = setTimeout(() => fn.apply(this, a), ms); }; };
   const img = (u, w) => { u = String(u || ''); if (/lh3\.googleusercontent\.com\/d\/[^=]+$/.test(u)) return u + '=w' + (w || 800); if (u && window.ACC_MODE === 'admin' && !/^([a-z]+:|\/|data:|\.\.\/)/i.test(u)) return '../' + u; return u; };
-  const cabNama = c => c === 'serui' ? 'Serui' : c === 'keduanya' ? 'Nabire & Serui' : c === 'semua' ? 'Semua' : 'Nabire';
+  const cabNama = c => {
+    if (c === 'keduanya') return App.T ? App.T('label_semua_cabang') : 'Semua cabang';
+    if (c === 'semua') return 'Semua';
+    const list = (App.mode === 'admin' ? (App.admin && App.admin.branches) : (App.pub && App.pub.branches)) || [];
+    const b = list.find(x => String(x.id) === String(c));
+    return b ? String(b.kota || String(b.nama || c).replace(/^Cabang\s+/i, '')) : String(c || '');
+  };
   const tgl = iso => { if (!iso) return '-'; const d = new Date(iso); if (isNaN(d)) return String(iso); return d.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); };
   const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2);
   Object.assign(App, { $, $$, esc, I, rp, hp08, hp62, debounce, img, cabNama, tgl, uid, hashStr });
@@ -52,6 +58,96 @@
     }).join('');
   }
   App.sosmedList = sosmedList;
+
+  const ICON_SET = ['storefront', 'home', 'smartphone', 'build_circle', 'qr_code_scanner', 'account_balance_wallet', 'location_on', 'map', 'menu', 'apps', 'grid_view', 'category', 'shopping_bag', 'sell', 'redeem', 'local_shipping', 'restaurant', 'local_cafe', 'checkroom', 'spa', 'directions_car', 'two_wheeler', 'school', 'medical_services', 'construction', 'support_agent', 'chat', 'call', 'info', 'photo_camera', 'event', 'favorite', 'star', 'published_with_changes', 'headphones', 'new_releases', 'recycling', 'inventory_2', 'home_repair_service', 'hotel', 'pets', 'fitness_center', 'content_cut', 'local_laundry_service', 'print', 'computer', 'diamond', 'shopping_cart'];
+  /* ---------------- TEKS & PENGATURAN TAMPILAN (semua bisa diubah dari dasbor) ---------------- */
+  const NAV_DEF = [{ id: 'bio', label: 'Beranda', icon: 'storefront', tampil: true }, { id: 'katalog', label: 'Katalog', icon: 'smartphone', tampil: true },
+    { id: 'layanan', label: 'Servis', icon: 'build_circle', tampil: true }, { id: 'bayar', label: 'Bayar', icon: 'qr_code_scanner', tampil: true },
+    { id: 'lokasi', label: 'Lokasi', icon: 'location_on', tampil: false }, { id: 'menu', label: 'Menu', icon: 'menu', tampil: true }];
+  const TXT_DEF = App.TXT_DEF = {
+    header_tampil: 'YA', header_tampil_nama: 'YA', tombol_install: 'YA', tombol_install_teks: 'Install', tombol_cs: 'YA', tombol_cs_teks: 'CS',
+    tombol_tema: 'YA', tema_bawaan: 'terang', navbawah_tampil: 'YA', navatas_tampil: 'YA', nav_items: JSON.stringify(NAV_DEF),
+    menu_katalog_tampil: 'YA', menu_katalog_judul: 'Katalog Smartphone & Aksesoris', menu_katalog_ikon: 'smartphone',
+    menu_bayar_tampil: 'YA', menu_bayar_judul: 'Rekening & QRIS Resmi', menu_bayar_ikon: 'account_balance_wallet', menu_bayar_chip: 'Verifikasi Toko',
+    menu_layanan_tampil: 'YA', menu_layanan_judul: 'Jual HP, Tukar Tambah & Servis', menu_layanan_ikon: 'published_with_changes',
+    menu_lokasi_tampil: 'TIDAK', menu_lokasi_judul: 'Lokasi Toko', menu_lokasi_sub: 'Alamat, jam buka & peta semua cabang', menu_lokasi_ikon: 'location_on',
+    sosmed_judul: 'Kanal Sosial Media Resmi', cabang_judul: 'Lokasi Toko & Kontak WhatsApp', cabang_jumlah: '2', teks_chat: 'Chat', teks_maps: 'Google Maps', teks_lihat_semua: 'Lihat semua',
+    lokasi_judul: 'Lokasi Toko', lokasi_sub: 'Temukan cabang terdekat, jam buka & petunjuk arah', lokasi_cari: 'Cari kota, alamat, atau nama cabang…',
+    kategori_list: 'HP Baru, HP Second, Aksesoris', label_semua: 'Semua', label_semua_cabang: 'Semua cabang', kata_produk: 'produk', katalog_cari: 'Cari iPhone, Samsung, RAM…',
+    label_merek: 'Merek', label_ram: 'RAM', label_memori: 'Memori', label_warna: 'Warna', label_kondisi: 'Kondisi', label_kelengkapan: 'Kelengkapan', label_garansi: 'Garansi',
+    label_tersedia: 'Tersedia', label_habis: 'Habis', tombol_pesan: 'Pesan via WA', tombol_habis: 'Stok Habis', label_promo: 'Promo', label_lokasi_filter: 'Lokasi toko',
+    teks_pesan_wa: 'Halo Admin {toko} {cabang}, saya tertarik dengan *{produk}* {varian}{warna} harga {harga}. Apakah masih tersedia?\n{link}',
+    detail_spek_judul: 'Spesifikasi & Detail', detail_kelengkapan_judul: 'Kelengkapan Paket', detail_jaminan1: 'IMEI terdaftar Kemenperin', detail_jaminan2: 'Bisa tukar tambah', detail_tombol: 'Pesan via WhatsApp',
+    katalog_trust_tampil: 'YA', katalog_trust_judul: '100% Produk Dijamin Original', katalog_trust_sub: 'Garansi resmi & klaim langsung dibantu teknisi kami',
+    cta_tampil: 'YA', cta_judul: 'Butuh Tipe Lain yang Belum Terdaftar?', cta_teks: 'Admin kami dapat mengecek ketersediaan unit di gudang atau melayani Pre-Order resmi.',
+    bayar_judul: 'Rekening & QRIS Resmi', bayar_sub: 'Pusat Pembayaran Sah Acc Cell Cabang Nabire & Serui', bayar_peringatan_judul: 'Perhatian Keamanan',
+    bayar_konfirmasi_judul: 'Konfirmasi Bukti Transfer', bayar_konfirmasi_teks: 'Setelah transfer berhasil, kirim tangkapan layar bukti pembayaran ke admin cabang untuk verifikasi.',
+    layanan_tips: 'Siapkan merek, tipe, dan kondisi HP Anda (sertakan foto) agar admin dapat memberi taksiran lebih cepat.',
+    warna_aksen: '#F9B54C', warna_aksen_teks: '#0B0B0C', warna_teks: '#0B0B0C', warna_teks2: '#6E6E73', warna_latar: '#F5F5F7', warna_kartu: '#FFFFFF',
+    warna_garis: '#E5E5EA', warna_harga: '#825500', warna_wa: '#25D366', warna_sosmed: '#161616', warna_header: '#FFFFFF'
+  };
+  const SET = () => (App.mode === 'admin' ? (App.admin && App.admin.settings) : (App.pub && App.pub.settings)) || {};
+  App.T = function (k) { const v = SET()[k]; return v === undefined || v === null || String(v).trim() === '' ? (TXT_DEF[k] !== undefined ? TXT_DEF[k] : '') : String(v); };
+  App.on_ = k => String(App.T(k)).toUpperCase() === 'YA';
+  App.kategori = () => String(App.T('kategori_list')).split(',').map(x => x.trim()).filter(Boolean);
+  App.navItems = function () { let a; try { a = JSON.parse(App.T('nav_items')); } catch (e) { a = null; } if (!Array.isArray(a) || !a.length) a = NAV_DEF; const ids = a.map(x => x.id); NAV_DEF.forEach(d => { if (ids.indexOf(d.id) < 0) a.push(Object.assign({}, d, { tampil: false })); }); return a; };
+  App.ICON_SET = ICON_SET;
+  const NAV_HREF = { bio: '#/', katalog: '#/katalog', layanan: '#/layanan', bayar: '#/bayar', lokasi: '#/lokasi', menu: '#' };
+
+  /* warna tema → variabel CSS (terang) + mode gelap */
+  const hex = v => /^#[0-9a-f]{6}$/i.test(String(v || '').trim()) ? String(v).trim() : '';
+  function mix(h, p) { const n = parseInt(h.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255; const m = c => Math.round(c + (255 - c) * p).toString(16).padStart(2, '0'); return '#' + m(r) + m(g) + m(b); }
+  App.applyTheme = function () {
+    const W = k => hex(App.T(k)) || TXT_DEF[k];
+    const ak = W('warna_aksen');
+    const css = ':root{--amber:' + ak + ';--on-amber:' + W('warna_aksen_teks') + ';--amber-soft:' + mix(ak, .86) + ';--amber-line:' + mix(ak, .55) + ';--amber-ink:' + W('warna_harga') +
+      ';--ink:' + W('warna_teks') + ';--ink-2:' + W('warna_teks2') + ';--canvas:' + W('warna_latar') + ';--surface:' + W('warna_kartu') + ';--line:' + W('warna_garis') +
+      ';--wa:' + W('warna_wa') + ';--sos:' + W('warna_sosmed') + ';--hdr:' + W('warna_header') + '}' +
+      'html[data-theme=dark]{--amber:' + ak + ';--amber-soft:rgba(255,255,255,.07);--amber-line:' + ak + '66;--amber-ink:' + ak + ';--ink:#F2F2F7;--ink-2:#A1A1A6;--ink-3:#8E8E93;--canvas:#0E0E10;--surface:#1C1C1E;--line:#2C2C2E;--line-2:#3A3A3C;--sos:#2C2C2E;--hdr:#151517;--ok-soft:rgba(48,209,88,.16);--danger-soft:rgba(255,69,58,.16);--info-soft:rgba(10,132,255,.16)}';
+    let st = document.getElementById('theme-vars'); if (!st) { st = document.createElement('style'); st.id = 'theme-vars'; document.head.appendChild(st); }
+    if (st.textContent !== css) st.textContent = css;
+    const m = $('meta[name=theme-color]'); if (m) m.setAttribute('content', document.documentElement.dataset.theme === 'dark' ? '#151517' : ak);
+  };
+  /* mode gelap: pilihan pengunjung disimpan di perangkat; bawaan dari dasbor */
+  App.theme = function () {
+    if (App.mode === 'admin') return 'terang';
+    const t = Store.get('tema', '');
+    if (t && App.on_('tombol_tema')) return t;
+    const d = App.T('tema_bawaan');
+    return d === 'gelap' ? 'gelap' : d === 'sistem' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'gelap' : 'terang';
+  };
+  App.setTheme = function (t) {
+    if (t) Store.set('tema', t);
+    document.documentElement.dataset.theme = App.theme() === 'gelap' ? 'dark' : 'light';
+    const b = $('[data-theme-toggle]'); if (b) b.innerHTML = I(App.theme() === 'gelap' ? 'light_mode' : 'dark_mode');
+    App.applyTheme();
+  };
+  /* header & navigasi dibangun dari pengaturan */
+  App.applyChrome = function () {
+    const S = SET();
+    const brandLogo = $('.brand img'), brandName = $('[data-brand]');
+    const lg = S.header_logo_url || S.logo_url;
+    if (brandLogo) brandLogo.src = lg ? img(lg, 120) : App.base + 'assets/logo.png';
+    if (brandName) { brandName.textContent = App.T('header_nama') !== '' ? App.T('header_nama') : (S.nama_toko || 'Acc Cell'); if (App.mode !== 'admin') brandName.hidden = !App.on_('header_tampil_nama'); }
+    if (lg) { const fi = $('link[rel=icon]'); if (fi) fi.href = img(lg, 96); }
+    if (App.mode === 'admin') return;
+    const top = $('.topbar'); if (top) top.hidden = !App.on_('header_tampil');
+    document.body.classList.toggle('no-header', !App.on_('header_tampil'));
+    const cs = $('[data-cs]'); if (cs) { cs.hidden = !App.on_('tombol_cs'); cs.innerHTML = I('chat') + esc(App.T('tombol_cs_teks')); }
+    const ins = $('[data-install]'); if (ins) { ins.dataset.allowed = App.on_('tombol_install') ? '1' : '0'; const sp = ins.querySelector('span:last-child'); if (sp) sp.textContent = App.T('tombol_install_teks'); App.installBtn(App._canInstall); }
+    const tt = $('[data-theme-toggle]'); if (tt) tt.hidden = !App.on_('tombol_tema');
+    const items = App.navItems().filter(x => x.tampil);
+    const link = (x, cls) => '<a href="' + NAV_HREF[x.id] + '"' + (x.id === 'menu' ? ' data-menu' : ' data-nav="' + x.id + '"') + (cls ? ' class="' + cls + '"' : '') + '>' + I(x.icon || 'apps') + '<span>' + esc(x.label) + '</span></a>';
+    const td = $('[data-topnav]'); if (td) { td.innerHTML = items.map(x => link(x)).join(''); td.hidden = !App.on_('navatas_tampil'); }
+    const bn = $('#pubnav'); if (bn) {
+      const bi = items.slice(0, 5);
+      bn.querySelector('.bnav-in').style.gridTemplateColumns = 'repeat(' + Math.max(1, bi.length) + ', 1fr)';
+      bn.querySelector('.bnav-in').innerHTML = bi.map(x => link(x)).join('');
+      bn.dataset.off = (!App.on_('navbawah_tampil') || !bi.length) ? '1' : '0';
+      document.body.classList.toggle('no-bnav', bn.dataset.off === '1');
+    }
+    $$('[data-nav]').forEach(a => a.classList.toggle('on', a.dataset.nav === (App.pages[App.cur] && App.pages[App.cur].nav || App.cur)));
+  };
 
   /* ---------------- penyimpanan perangkat ---------------- */
   const Store = App.Store = {
@@ -121,7 +217,7 @@
   function setPub(d, fromCache) {
     App.pub = d; App.pubError = '';
     const s = (d && d.settings) || {};
-    if (/^#[0-9a-f]{6}$/i.test(s.warna_aksen || '')) document.documentElement.style.setProperty('--amber', s.warna_aksen);
+    App.setTheme(); App.applyChrome();
     if (s.meta_deskripsi) { const m = $('meta[name=description]'); if (m) m.setAttribute('content', s.meta_deskripsi); }
     App.rerender();
     if (!fromCache || !GAS_URL) App.emit('pub');
@@ -172,12 +268,14 @@
     if (def.render) def.render(el, param, false, changed);
     App.dirty[name] = false;
     $$('[data-nav]').forEach(a => a.classList.toggle('on', a.dataset.nav === (def.nav || name)));
+    document.body.classList.toggle('no-bnav', !!def.admin || (pn0() && pn0().dataset.off === '1'));
     const pn = $('#pubnav'); if (pn) pn.hidden = !!def.admin;
     if (changed && !def.keepScroll) App.scrollY(0);
     if (def.title) document.title = def.title(param) + ' — ' + ((App.pub && App.pub.settings && App.pub.settings.nama_toko) || 'Acc Cell');
     App.emit('route', name);
   }
   App.route = route;
+  const pn0 = () => $('#pubnav');
   App.scrollY = y => { try { window.scrollTo({ top: y, left: 0, behavior: 'instant' }); } catch (e) { window.scrollTo(0, y); } };
 
   /* ---------------- toast / sheet / konfirmasi ---------------- */
@@ -276,7 +374,7 @@
   const isStandalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
   const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   App.isStandalone = isStandalone;
-  function installBtn(show) { const b = $('[data-install]'); if (b) b.hidden = !show || isStandalone() || App.mode === 'admin'; }
+  function installBtn(show) { App._canInstall = !!show; const b = $('[data-install]'); if (b) b.hidden = !show || b.dataset.allowed === '0' || isStandalone() || App.mode === 'admin'; }
   App.installBtn = installBtn;
   addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; Store.del(PWA_KEY); installBtn(true); });
   addEventListener('appinstalled', () => { deferred = null; Store.set(PWA_KEY, Date.now()); installBtn(false); App.toast('Aplikasi Acc Cell terpasang di HP Anda'); });
@@ -328,6 +426,10 @@
 
   /* ---------------- mulai ---------------- */
   App.start = function () {
+    const c0 = Store.get('pub', null); if (c0 && c0.data && App.mode !== 'admin') App.pub = App.pub || null;
+    App.setTheme(); App.applyChrome();
+    document.addEventListener('click', e => { if (e.target.closest('[data-theme-toggle]')) { App.setTheme(App.theme() === 'gelap' ? 'terang' : 'gelap'); } });
+    if (window.matchMedia) { const mq = matchMedia('(prefers-color-scheme: dark)'); if (mq.addEventListener) mq.addEventListener('change', () => App.setTheme()); }
     window.addEventListener('hashchange', route);
     route();
     App.loadPublic();

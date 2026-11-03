@@ -1,4 +1,4 @@
-/* Data contoh bawaan — dipakai otomatis bila GAS_URL di js/config.js masih kosong (mode demo). */
+/* Data contoh untuk mode demo (dibuat otomatis dari backend). */
 window.ACC_DEMO = {
  "ver": "demo",
  "settings": {
@@ -29,6 +29,21 @@ window.ACC_DEMO = {
   "katalog_sub": "Koleksi original bergaransi resmi untuk Nabire & Serui",
   "layanan_judul": "Jual HP, Tukar Tambah & Servis",
   "layanan_sub": "Pilih layanan, lalu chat admin cabang terdekat. Gratis konsultasi.",
+  "header_nama": "",
+  "header_logo_url": "",
+  "header_tampil_nama": "YA",
+  "menu_katalog_judul": "Katalog Smartphone & Aksesoris",
+  "menu_bayar_judul": "Rekening & QRIS Resmi",
+  "menu_bayar_chip": "Verifikasi Toko",
+  "menu_layanan_judul": "Jual HP, Tukar Tambah & Servis",
+  "sosmed_judul": "Kanal Sosial Media Resmi",
+  "cabang_judul": "Lokasi Toko & Kontak WhatsApp",
+  "bayar_judul": "Rekening & QRIS Resmi",
+  "bayar_sub": "Pusat Pembayaran Sah Acc Cell Cabang Nabire & Serui",
+  "katalog_trust_judul": "100% Produk Dijamin Original",
+  "katalog_trust_sub": "Garansi resmi & klaim langsung dibantu teknisi kami",
+  "cta_judul": "Butuh Tipe Lain yang Belum Terdaftar?",
+  "cta_teks": "Admin kami dapat mengecek ketersediaan unit di gudang atau melayani Pre-Order resmi.",
   "sosmed_gaya": "tombol",
   "produk_judul": "Produk Pilihan",
   "produk_jumlah": "10",
@@ -114,7 +129,8 @@ window.ACC_DEMO = {
    "embed_maps": "https://www.google.com/maps?q=Nabire,+Papua+Tengah&output=embed",
    "jam_buka": "09.00 - 21.00 WIT",
    "urutan": 1,
-   "aktif": true
+   "aktif": true,
+   "kota": "Nabire"
   },
   {
    "id": "serui",
@@ -125,7 +141,8 @@ window.ACC_DEMO = {
    "embed_maps": "https://www.google.com/maps?q=Serui,+Kepulauan+Yapen&output=embed",
    "jam_buka": "09.00 - 21.00 WIT",
    "urutan": 2,
-   "aktif": true
+   "aktif": true,
+   "kota": "Serui"
   }
  ],
  "socials": [
@@ -258,7 +275,7 @@ window.ACC_DEMO = {
    "status": "Tersedia",
    "cabang": "nabire",
    "deskripsi": "Chip A17 Pro, kamera 48MP, bodi titanium ringan. Unit resmi iBox.",
-   "dibuat": "2026-11-01T14:22:18.209Z",
+   "dibuat": "2026-11-02T08:02:41.541Z",
    "foto": [
     "https://lh3.googleusercontent.com/aida-public/AB6AXuD2QV82DGA0_oJc9Eonxn7KxPLf6nPYGdLD4GrcI-aZHimHoC5qX_r598_mNLOL_q4PaHSyoWiwKGLdUJrTNlXGybeLVMC3c6G_CaO0Ips1H_lkE3SaOWkYBFt6T97sOqMvIoKJ2ZkzweNFNviVAUX_I1SS_dySVoQu3DIviMA8vdlrHhYvDG0fbWU4ewg34lqAY8832QKLSTULaIKzTda_u_FfPrnJa1Apw0PD8_eV"
    ]
@@ -279,7 +296,7 @@ window.ACC_DEMO = {
    "status": "Tersedia",
    "cabang": "keduanya",
    "deskripsi": "Layar 6.5\" Super AMOLED 90Hz, baterai 5000 mAh dengan 25W fast charge.",
-   "dibuat": "2026-11-01T14:22:18.209Z",
+   "dibuat": "2026-11-02T08:02:41.541Z",
    "foto": [
     "https://lh3.googleusercontent.com/aida-public/AB6AXuCgbELeWXOlh_i4zm3hI1HR3iaJufyMmXIC4TeWU80gNKHrYKRcqP81wSUUEd_Tyk2jPiZhkPUbfvRfZcG1A-FNAwQ594fNdaOuszlQjweCLF9A1qV_QP49wg5DGbPz_2P0Jui34M0mBV5yQ75KAGApkHuwzmRY0DUWDzxAtaKTxD1zGQjv_VtVt8TigNa4fsP__Qsbc-FKHPcNWmGQikMcarx264iybFwfTqOII62l",
     "https://lh3.googleusercontent.com/aida-public/AB6AXuAOfm6i44ziqdoxaVnmNmNVrCR8OiFw_pJ5gwvxrnvyd6Wd2ta8YlwGZUs10q7ZZr3Jbb3pJcLhLDrH4BBxlOzehrHJwm1J-mrcgKBIApKGjGJoDha9AARUUms9vLwZD7uTp-g-g597SOd3A2rLckY5-yk5dluIjcdPz1ON4LgSUsXf5g63iCSkzJaukw2yhRrGvfVRtlvjx1H54EPCt-YoxYuejk9xxxb33ShuDY4a",
@@ -304,7 +321,7 @@ window.ACC_DEMO = {
    "status": "Tersedia",
    "cabang": "serui",
    "deskripsi": "Mulus tanpa lecet, Face ID normal, semua fungsi aman. IMEI terdaftar.",
-   "dibuat": "2026-11-01T14:22:18.209Z",
+   "dibuat": "2026-11-02T08:02:41.541Z",
    "foto": [
     "https://lh3.googleusercontent.com/aida-public/AB6AXuA1o9CtA7Cjacw6fhZdeHfK6GtFE0xc7Rcc651Z6zQMD31a-1ZW7KtyIlJWU_oWwk0gICoC9UQbqDs6jq3x00UClKvCCgUIwNRiOR8j8AZ0p231kBSBKUNRyBOLv2KbuWHxB72iWwZQjPPDYTyQPM_FLcIi8nLZT6ML4Al3_4KucmY0Q5D9j68ArhMZvixaeqaWL_GYOyzX5r8Flxl-z-QCtvbZrCt2es_6g18Dm_WX"
    ]
@@ -325,7 +342,7 @@ window.ACC_DEMO = {
    "status": "Tersedia",
    "cabang": "nabire",
    "deskripsi": "Kamera 108MP, layar AMOLED 120Hz, charger 33W di dalam dus.",
-   "dibuat": "2026-11-01T14:22:18.209Z",
+   "dibuat": "2026-11-02T08:02:41.541Z",
    "foto": [
     "https://lh3.googleusercontent.com/aida-public/AB6AXuCRD_Wec3b4kVsoyAq5054jEoWVS2qAnxmKeNy9oXJVxTr_zDBGGtzOvwoi_hvsigr2Ktr4zFbrZdroXEuFLbWQAY03RhBorze-_Egzz78g7hrB4aCPx-xLudYRLoyJPTPVgpuEozkIrir9NlZQ_MDNEfpDS0-cxYkBQJcNZkBTEGSn_fe9_1A5GkndkirMPLN7Yte3jvs0q0HIt22_HyEP-Af2A4SC8s5b3H7JQ3id"
    ]
@@ -346,7 +363,7 @@ window.ACC_DEMO = {
    "status": "Tersedia",
    "cabang": "keduanya",
    "deskripsi": "Pengisian cepat untuk iPhone 8 ke atas. 100% original.",
-   "dibuat": "2026-11-01T14:22:18.209Z",
+   "dibuat": "2026-11-02T08:02:41.541Z",
    "foto": [
     "https://lh3.googleusercontent.com/aida-public/AB6AXuBUZWD13CZ1kWaaKXp0zFXuF0O2aeJvGhTXx_3DCgkZe76YYnCGw9OWfJjb4mV8BuSA_ceoXAwLB485WDOgBQxzXoiT-U6Z6MIh6DcmCeHoLVWcY-tt1OX59y3nLCxebkeuqcs86YKc1DhdUnJE4AooaQIviEQIcNDibhgrIPASqls1oSc37kSWhIr1j0nnFo7CN2Yo8rwbiAO9fzPakZnd-DvsGPN2p28X-CIsT-6r"
    ]
@@ -367,7 +384,7 @@ window.ACC_DEMO = {
    "status": "Habis",
    "cabang": "nabire",
    "deskripsi": "Unit terjual — tanyakan stok serupa ke admin.",
-   "dibuat": "2026-11-01T14:22:18.209Z",
+   "dibuat": "2026-11-02T08:02:41.541Z",
    "foto": [
     "https://lh3.googleusercontent.com/aida-public/AB6AXuDHXtI5-aerY5mQTBgAckQBNq0qc_TFIrengJOfNx6uJY5EwqawjCtmf3KuU4Bh7Zvr3R0fS1w0iMLjjfbqBzc_-5ZaZaqs9e9NezFFzZUh64TQfN7Z5IM6T7VVJMJY2UewUwg1Ag8fwNlrLz_m-4VE0mDXgQR3SVOheWvzYTTIj0sIFUDzn6DIppFWAzAXAabPTOhJM9GSMqwCQatqlLxhQ7I8pOwh3eqB8Cn6DYn6"
    ]
@@ -388,7 +405,7 @@ window.ACC_DEMO = {
    "status": "Tersedia",
    "cabang": "serui",
    "deskripsi": "Promo Buy 1 Get 1 — berlaku untuk semua tipe handphone.",
-   "dibuat": "2026-11-01T14:22:18.209Z",
+   "dibuat": "2026-11-02T08:02:41.541Z",
    "foto": [
     "https://lh3.googleusercontent.com/aida-public/AB6AXuA93AtF_2xuiJ8z0jj6SqsvXj8iiNn15clSZZ8VDXfIA0E_VQypYiq_tKRbbssTCviXWyN8rQGCUukr32rAvVxl2gwe8HBzCN5CjiGKyoB6w5ewRKA-KRZtjYEV794QXhSnC4ojQjNd_OL_oDusU_awIiLItcfVkrQG2W6pcWxw454-GAB7t7C54eN_HHOeGnYALMkEwVt8q2_YdFjz0fGUsPnOJTvRWnYjRpQCiTk-"
    ]
@@ -409,7 +426,7 @@ window.ACC_DEMO = {
    "status": "Tersedia",
    "cabang": "serui",
    "deskripsi": "Pemakaian 6 bulan, mulus seperti baru.",
-   "dibuat": "2026-11-01T14:22:18.209Z",
+   "dibuat": "2026-11-02T08:02:41.541Z",
    "foto": [
     "https://lh3.googleusercontent.com/aida-public/AB6AXuD2QV82DGA0_oJc9Eonxn7KxPLf6nPYGdLD4GrcI-aZHimHoC5qX_r598_mNLOL_q4PaHSyoWiwKGLdUJrTNlXGybeLVMC3c6G_CaO0Ips1H_lkE3SaOWkYBFt6T97sOqMvIoKJ2ZkzweNFNviVAUX_I1SS_dySVoQu3DIviMA8vdlrHhYvDG0fbWU4ewg34lqAY8832QKLSTULaIKzTda_u_FfPrnJa1Apw0PD8_eV"
    ]
@@ -430,7 +447,7 @@ window.ACC_DEMO = {
    "status": "Tersedia",
    "cabang": "serui",
    "deskripsi": "Varian memori besar untuk foto & video.",
-   "dibuat": "2026-11-01T14:22:18.209Z",
+   "dibuat": "2026-11-02T08:02:41.541Z",
    "foto": [
     "https://lh3.googleusercontent.com/aida-public/AB6AXuCgbELeWXOlh_i4zm3hI1HR3iaJufyMmXIC4TeWU80gNKHrYKRcqP81wSUUEd_Tyk2jPiZhkPUbfvRfZcG1A-FNAwQ594fNdaOuszlQjweCLF9A1qV_QP49wg5DGbPz_2P0Jui34M0mBV5yQ75KAGApkHuwzmRY0DUWDzxAtaKTxD1zGQjv_VtVt8TigNa4fsP__Qsbc-FKHPcNWmGQikMcarx264iybFwfTqOII62l",
     "https://lh3.googleusercontent.com/aida-public/AB6AXuBCmokRd32OfIMaqy9Os8WvIszKLuwOdFmROljf7ij_zgXG0lTD7_08Ra9cpXmWQlNwLUFCRJ24UtGoa2TYc7xf9dcH-60ZP7v6E_EAtnThyJukwXNSxyAq5Vub1sw320Sl7Z90FAs1dS5WZiVeBehs0f20_OzVhgnzjZhWfTbAbPdXzaT99TYQ9oSBv0kz3kexD3dS69EvmsoF0tVEtqZSaAezRIhkGQUtqeoZQbyk"
@@ -452,7 +469,7 @@ window.ACC_DEMO = {
    "status": "Tersedia",
    "cabang": "nabire",
    "deskripsi": "Tersedia untuk iPhone, Samsung, Xiaomi, Oppo, Vivo, Realme.",
-   "dibuat": "2026-11-01T14:22:18.209Z",
+   "dibuat": "2026-11-02T08:02:41.541Z",
    "foto": [
     "https://lh3.googleusercontent.com/aida-public/AB6AXuA93AtF_2xuiJ8z0jj6SqsvXj8iiNn15clSZZ8VDXfIA0E_VQypYiq_tKRbbssTCviXWyN8rQGCUukr32rAvVxl2gwe8HBzCN5CjiGKyoB6w5ewRKA-KRZtjYEV794QXhSnC4ojQjNd_OL_oDusU_awIiLItcfVkrQG2W6pcWxw454-GAB7t7C54eN_HHOeGnYALMkEwVt8q2_YdFjz0fGUsPnOJTvRWnYjRpQCiTk-"
    ]
@@ -473,7 +490,7 @@ window.ACC_DEMO = {
    "status": "Tersedia",
    "cabang": "serui",
    "deskripsi": "Siap pakai, baterai sehat.",
-   "dibuat": "2026-11-01T14:22:18.209Z",
+   "dibuat": "2026-11-02T08:02:41.541Z",
    "foto": [
     "https://lh3.googleusercontent.com/aida-public/AB6AXuCRD_Wec3b4kVsoyAq5054jEoWVS2qAnxmKeNy9oXJVxTr_zDBGGtzOvwoi_hvsigr2Ktr4zFbrZdroXEuFLbWQAY03RhBorze-_Egzz78g7hrB4aCPx-xLudYRLoyJPTPVgpuEozkIrir9NlZQ_MDNEfpDS0-cxYkBQJcNZkBTEGSn_fe9_1A5GkndkirMPLN7Yte3jvs0q0HIt22_HyEP-Af2A4SC8s5b3H7JQ3id"
    ]
@@ -494,7 +511,7 @@ window.ACC_DEMO = {
    "status": "Tersedia",
    "cabang": "nabire",
    "deskripsi": "Memori lega, kamera jernih. Cocok untuk konten.",
-   "dibuat": "2026-11-01T14:22:18.209Z",
+   "dibuat": "2026-11-02T08:02:41.541Z",
    "foto": [
     "https://lh3.googleusercontent.com/aida-public/AB6AXuA1o9CtA7Cjacw6fhZdeHfK6GtFE0xc7Rcc651Z6zQMD31a-1ZW7KtyIlJWU_oWwk0gICoC9UQbqDs6jq3x00UClKvCCgUIwNRiOR8j8AZ0p231kBSBKUNRyBOLv2KbuWHxB72iWwZQjPPDYTyQPM_FLcIi8nLZT6ML4Al3_4KucmY0Q5D9j68ArhMZvixaeqaWL_GYOyzX5r8Flxl-z-QCtvbZrCt2es_6g18Dm_WX"
    ]

@@ -25,7 +25,7 @@
   }
   A.onAuthExpired = () => logout('Sesi berakhir. Silakan masuk lagi.');
   const bootKey = () => 'a:boot:' + (A.user && A.user.id);
-  function setBoot(b) { A.admin = b; Store.set(bootKey(), { t: Date.now(), data: b }); }
+  function setBoot(b) { A.admin = b; Store.set(bootKey(), { t: Date.now(), data: b }); try { A.applyTheme(); A.applyChrome(); } catch (e) { } }
   async function loadBoot(force) {
     const c = Store.get(bootKey(), null);
     if (c && !A.admin) A.admin = c.data;
@@ -44,7 +44,7 @@
     { id: 'beranda', t: 'Beranda', i: 'space_dashboard', all: 1 },
     { id: 'produk', t: 'Produk', i: 'smartphone', all: 1 },
     { g: 'Tampilan Link Bio' },
-    { id: 'tampilan', t: 'Profil & Urutan', i: 'tune' },
+    { id: 'tampilan', t: 'Tampilan & Teks', i: 'tune' },
     { id: 'banner', t: 'Slide Hero', i: 'view_carousel' },
     { id: 'popup', t: 'Pop-up Promo', i: 'campaign' },
     { id: 'bayar', t: 'Rekening & QRIS', i: 'account_balance_wallet' },
@@ -59,6 +59,8 @@
     { id: 'log', t: 'Log Aktivitas', i: 'history' },
     { id: 'akun', t: 'Akun Saya', i: 'person', all: 1 }
   ];
+  const branchOpts = () => (B().branches || []).map(b => [b.id, cabNama(b.id)]);
+  const T = A.T;
   const allowed = id => { const m = MENU.find(x => x.id === id); return m && (m.all || isSA()); };
 
   A.page('admin', {
@@ -167,6 +169,7 @@
     if (f.type === 'textarea') inp = '<textarea id="' + id + '" name="' + f.k + '"' + (f.ro ? ' disabled' : '') + ' rows="' + (f.rows || 3) + '" placeholder="' + esc(f.ph || '') + '">' + esc(val) + '</textarea>';
     else if (f.type === 'select') inp = '<select id="' + id + '" name="' + f.k + '"' + (f.ro ? ' disabled' : '') + '>' + f.opts.map(o => { const ov = Array.isArray(o) ? o[0] : o, ol = Array.isArray(o) ? o[1] : o; return '<option value="' + esc(ov) + '"' + (String(ov) === String(val) ? ' selected' : '') + '>' + esc(ol) + '</option>'; }).join('') + '</select>';
     else if (f.type === 'switch') return '<label class="row" style="justify-content:space-between;padding:6px 0"><span><b style="font:600 14px var(--f-body)">' + esc(f.t) + '</b>' + (f.hint ? '<div class="hint muted small">' + esc(f.hint) + '</div>' : '') + '</span><span class="switch"><input type="checkbox" name="' + f.k + '"' + (val === true || String(val).toUpperCase() === 'YA' || val === 'TRUE' ? ' checked' : '') + '><i></i></span></label>';
+    else if (f.type === 'icon') return '<div class="fld"><span>' + esc(f.t) + '</span><input type="hidden" name="' + f.k + '" value="' + esc(val) + '"><button type="button" class="btn btn-ghost btn-sm" data-iconf="' + f.k + '">' + I(val || 'apps') + '<span>Ganti ikon</span></button></div>';
     else if (f.type === 'image') return '<div class="fld"><span>' + esc(f.t) + '</span><div class="imgpick"><div class="pv" data-pv style="background-image:url(\'' + esc(img(val, 300)) + '\')"></div><div class="grow f" style="gap:6px"><input name="' + f.k + '" value="' + esc(val) + '" placeholder="URL gambar atau unggah →" class="inp" style="min-height:38px;font-size:13px"><label class="btn btn-ghost btn-sm" style="align-self:flex-start">' + I('upload') + 'Unggah gambar<input type="file" accept="image/*" hidden data-up="' + f.k + '" data-folder="' + (f.folder || 'Banner') + '"></label></div></div>' + (f.hint ? '<div class="hint">' + esc(f.hint) + '</div>' : '') + '</div>';
     else inp = '<input id="' + id + '" name="' + f.k + '" type="' + (f.type === 'number' || f.type === 'url' ? 'text' : (f.type || 'text')) + '"' + (f.type === 'number' || f.type === 'money' ? ' inputmode="numeric"' : '') + ' value="' + esc(f.type === 'money' && val ? String(val).replace(/\B(?=(\d{3})+(?!\d))/g, '.') : val) + '"' + (f.ro ? ' disabled' : '') + (f.req ? ' required' : '') + ' placeholder="' + esc(f.ph || '') + '"' + (f.max ? ' maxlength="' + f.max + '"' : '') + (f.type === 'url' || f.type === 'email' ? ' autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="' + f.type + '"' : '') + '>';
     return '<div class="fld"><label for="' + id + '">' + esc(f.t) + (f.req ? ' *' : '') + '</label>' + inp + (f.hint ? '<div class="hint">' + esc(f.hint) + '</div>' : '') + '</div>';
@@ -240,14 +243,14 @@
     const s = B().settings || {};
     m.innerHTML = head('Halo, ' + (A.user.nama || '').split(' ')[0] + ' 👋', '<a class="btn btn-amber btn-sm" href="#/produk" data-add>' + I('add') + 'Tambah Produk</a>') +
       '<div class="kpis">' +
-      (sa ? '<div class="kpi click" data-k="nabire"><span>' + I('location_on') + 'Produk Nabire</span><b>' + cnt('nabire') + '</b><small>termasuk stok bersama</small></div><div class="kpi click" data-k="serui"><span>' + I('location_on') + 'Produk Serui</span><b>' + cnt('serui') + '</b><small>termasuk stok bersama</small></div>'
+      (sa ? branchOpts().map(b => '<div class="kpi click" data-k="' + esc(b[0]) + '"><span>' + I('location_on') + T('kata_produk').replace(/^./, c => c.toUpperCase()) + ' ' + esc(b[1]) + '</span><b>' + cnt(b[0]) + '</b><small>termasuk stok bersama</small></div>').join('')
         : '<div class="kpi click" data-k="semua"><span>' + I('inventory_2') + 'Produk ' + cabNama(A.user.cabang) + '</span><b>' + P.filter(p => p.cabang === A.user.cabang).length + '</b><small>+ ' + P.filter(p => p.cabang === 'keduanya').length + ' stok bersama</small></div>') +
       '<div class="kpi click" data-k="tersedia"><span>' + I('check_circle') + 'Tersedia / Habis</span><b>' + (P.length - habis) + ' <span style="font-size:16px;color:var(--danger)">/ ' + habis + '</span></b><small>' + tampil + ' tampil di katalog</small></div>' +
       (sa ? '<div class="kpi ' + (String(s.popup_aktif).toUpperCase() === 'YA' ? 'amber' : '') + ' click" data-go="popup"><span>' + I('campaign') + 'Pop-up Promo</span><b>' + (String(s.popup_aktif).toUpperCase() === 'YA' ? 'AKTIF' : 'OFF') + '</b><small>' + esc((B().banners || []).filter(b => b.aktif).length) + ' banner aktif</small></div>' : '') +
       '</div>' +
       '<div class="panel"><div class="panel-h"><h3>Statistik Pengunjung</h3><div class="seg" data-hari>' + [[7, '7 hari'], [30, '30 hari'], [90, '90 hari']].map(x => '<button data-h="' + x[0] + '"' + (x[0] === statHari ? ' class="on"' : '') + '>' + x[1] + '</button>').join('') + '</div></div><div data-stats><div class="skel" style="height:180px"></div></div></div>' +
       (sa ? '<div class="menu-grid mt16">' + [['tampilan', 'tune', 'Atur urutan halaman'], ['banner', 'view_carousel', 'Ganti slide promo'], ['bayar', 'account_balance_wallet', 'Rekening & QRIS'], ['notif', 'forum', 'Blast WA promo'], ['crm', 'contacts', 'CRM pelanggan'], ['pengguna', 'manage_accounts', 'Admin cabang']].map(x => '<a href="#/' + x[0] + '">' + I(x[1]) + x[2] + '</a>').join('') + '</div>' : '');
-    m.querySelectorAll('[data-k]').forEach(k => k.onclick = () => { prodFilter.cab = ['nabire', 'serui'].indexOf(k.dataset.k) > -1 ? k.dataset.k : ''; prodFilter.status = k.dataset.k === 'tersedia' ? '' : prodFilter.status; A.go('produk'); });
+    m.querySelectorAll('[data-k]').forEach(k => k.onclick = () => { prodFilter.cab = branchOpts().some(b => b[0] === k.dataset.k) ? k.dataset.k : ''; prodFilter.status = k.dataset.k === 'tersedia' ? '' : prodFilter.status; A.go('produk'); });
     m.querySelectorAll('[data-go]').forEach(k => k.onclick = () => A.go(k.dataset.go));
     m.querySelector('[data-add]').onclick = ev => { ev.preventDefault(); A.go('produk'); setTimeout(() => productForm(), 50); };
     m.querySelector('[data-hari]').onclick = ev => { const b = ev.target.closest('[data-h]'); if (!b) return; statHari = +b.dataset.h; m.querySelectorAll('[data-h]').forEach(x => x.classList.toggle('on', x === b)); loadStats(m); };
@@ -263,36 +266,36 @@
   }
   function drawStats(box, s) {
     if (!box) return;
-    const t = s.total || {}, wa = s.waCabang, maxWa = wa ? Math.max(1, wa.nabire, wa.serui) : 1;
+    const t = s.total || {}, wa = s.waCabang, maxWa = wa ? Math.max(1, ...Object.values(wa)) : 1;
     const top = (arr, lbl) => '<div class="grow"><h4 style="font:600 13px var(--f-body);margin-bottom:8px">' + lbl + '</h4>' + (arr.length ? '<ol class="toplist">' + arr.map((x, i) => '<li><span class="n">' + (i + 1) + '</span><span class="grow ell">' + esc(x.nama) + '</span><b>' + x.jumlah + '×</b></li>').join('') + '</ol>' : '<p class="muted small">Belum ada data.</p>') + '</div>';
     box.innerHTML = '<div class="kpis"><div class="kpi dark"><span>' + I('chat') + 'Klik WhatsApp</span><b>' + (t.klik_wa || 0) + '</b><small>' + s.hari + ' hari terakhir</small></div><div class="kpi"><span>' + I('group') + 'Kunjungan</span><b>' + (t.kunjungan || 0) + '</b><small>sesi pengunjung</small></div>' +
       '<div class="kpi"><span>' + I('visibility') + 'Produk dilihat</span><b>' + (t.lihat_produk || 0) + '</b><small>buka detail</small></div><div class="kpi"><span>' + I('touch_app') + 'Buka katalog</span><b>' + (t.buka_katalog || 0) + '</b><small>rekening: ' + (t.buka_pembayaran || 0) + '</small></div></div>' +
       '<div class="two"><div class="panel"><h4 style="font:600 13px var(--f-body)">Klik WhatsApp per hari</h4>' + spark(s.harian || [], 'wa', '#1DA851') + '<div class="row small muted" style="justify-content:space-between"><span>' + esc((s.harian[0] || {}).tanggal || '') + '</span><span>' + esc((s.harian[s.harian.length - 1] || {}).tanggal || '') + '</span></div></div>' +
-      (wa ? '<div class="panel"><h4 style="font:600 13px var(--f-body);margin-bottom:12px">Perbandingan klik WA: Nabire vs Serui</h4><div class="bar-chart"><div class="bar-row"><span>Nabire</span><div class="bar"><i style="width:' + (wa.nabire / maxWa * 100) + '%"></i></div><b>' + wa.nabire + '</b></div><div class="bar-row"><span>Serui</span><div class="bar"><i class="ink" style="width:' + (wa.serui / maxWa * 100) + '%"></i></div><b>' + wa.serui + '</b></div></div></div>' : '<div class="panel">' + top(s.topLihat || [], 'Produk paling sering dilihat') + '</div>') + '</div>' +
+      (wa ? '<div class="panel"><h4 style="font:600 13px var(--f-body);margin-bottom:12px">Perbandingan klik WA per lokasi</h4><div class="bar-chart">' + Object.keys(wa).map((id, i) => '<div class="bar-row"><span class="ell">' + esc(cabNama(id)) + '</span><div class="bar"><i' + (i % 2 ? ' class="ink"' : '') + ' style="width:' + (wa[id] / maxWa * 100) + '%"></i></div><b>' + wa[id] + '</b></div>').join('') + '</div></div>' : '<div class="panel">' + top(s.topLihat || [], 'Produk paling sering dilihat') + '</div>') + '</div>' +
       '<div class="two">' + (wa ? '<div class="panel">' + top(s.topLihat || [], 'Produk paling sering dilihat') + '</div>' : '') + '<div class="panel">' + top(s.topTanya || [], 'Produk paling sering ditanyakan (klik WA)') + '</div></div>';
   }
 
   /* ======================= PRODUK ======================= */
   const prodFilter = { q: '', kat: '', cab: '', status: '' };
   const PROD_SPEC = () => [
-    { k: 'nama', t: 'Nama produk', req: 1, ph: 'Samsung Galaxy A15 6/128GB', max: 120 },
-    { k: 'merek', t: 'Merek', half: 1, ph: 'Samsung' }, { k: 'kategori', t: 'Kategori', type: 'select', opts: ['HP Baru', 'HP Second', 'Aksesoris'], half: 1 },
-    { k: 'harga', t: 'Harga (Rp)', type: 'money', req: 1, half: 1, ph: '2.499.000' }, { k: 'harga_coret', t: 'Harga coret (opsional)', type: 'money', half: 1, ph: '2.699.000' },
-    { k: 'ram', t: 'RAM', half: 1, ph: '6 GB' }, { k: 'memori', t: 'Memori', half: 1, ph: '128 GB' },
-    { k: 'warna', t: 'Warna', ph: 'Hitam, Biru (pisahkan dengan koma)' },
-    { k: 'kondisi', t: 'Kondisi', half: 1, ph: 'Baru Segel / Second 99%' }, { k: 'garansi', t: 'Garansi', half: 1, ph: 'Resmi 1 Tahun' },
-    { k: 'kelengkapan', t: 'Kelengkapan', type: 'textarea', rows: 2, ph: 'Fullset dus, charger, kabel (pisahkan koma)' },
-    { k: 'cabang', t: 'Cabang', type: 'select', opts: isSA() ? [['nabire', 'Nabire'], ['serui', 'Serui'], ['keduanya', 'Keduanya (Nabire & Serui)']] : [[A.user.cabang, cabNama(A.user.cabang)]], ro: !isSA(), half: 1 },
-    { k: 'status', t: 'Status stok', type: 'select', opts: ['Tersedia', 'Habis'], half: 1 },
+    { k: 'nama', t: 'Nama ' + T('kata_produk'), req: 1, max: 120 },
+    { k: 'merek', t: T('label_merek'), half: 1 }, { k: 'kategori', t: 'Kategori', type: 'select', opts: A.kategori(), half: 1 },
+    { k: 'harga', t: 'Harga (Rp)', type: 'money', req: 1, half: 1, ph: '2.499.000' }, { k: 'harga_coret', t: 'Harga coret (opsional)', type: 'money', half: 1 },
+    { k: 'ram', t: T('label_ram'), half: 1 }, { k: 'memori', t: T('label_memori'), half: 1 },
+    { k: 'warna', t: T('label_warna'), hint: 'Pisahkan dengan koma' },
+    { k: 'kondisi', t: T('label_kondisi'), half: 1 }, { k: 'garansi', t: T('label_garansi'), half: 1 },
+    { k: 'kelengkapan', t: T('label_kelengkapan'), type: 'textarea', rows: 2, hint: 'Pisahkan dengan koma' },
+    { k: 'cabang', t: 'Lokasi / cabang', type: 'select', opts: isSA() ? branchOpts().concat([['keduanya', T('label_semua_cabang')]]) : [[A.user.cabang, cabNama(A.user.cabang)]], ro: !isSA(), half: 1 },
+    { k: 'status', t: 'Status stok', type: 'select', opts: [['Tersedia', T('label_tersedia')], ['Habis', T('label_habis')]], half: 1 },
     { k: 'deskripsi', t: 'Deskripsi', type: 'textarea', rows: 3 },
     { k: 'aktif', t: 'Tampilkan di katalog', type: 'switch' }
-  ];
+  ].filter(f => f.t !== '' && f.t !== undefined);
   VIEWS.produk = function (m) {
     m.innerHTML = head('Produk', '<button class="btn btn-amber btn-sm" data-add>' + I('add') + 'Tambah Produk</button>' + (isSA() ? '<a class="btn btn-ghost btn-sm" href="#/migrasi">' + I('upload_file') + 'Import CSV</a>' : '')) +
       '<div class="search" style="margin-top:0">' + I('search') + '<input type="search" placeholder="Cari nama, merek, RAM…" value="' + esc(prodFilter.q) + '" data-q></div>' +
-      '<div class="pills mt12" data-f="kat">' + [['', 'Semua'], ['HP Baru', 'HP Baru'], ['HP Second', 'HP Second'], ['Aksesoris', 'Aksesoris']].map(x => '<button class="pill" data-v="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
+      '<div class="pills mt12" data-f="kat">' + [['', T('label_semua')]].concat(A.kategori().map(k => [k, k])).map(x => '<button class="pill" data-v="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
       '<div class="pills mt8" data-f="status">' + [['', 'Semua status'], ['Tersedia', 'Tersedia'], ['Habis', 'Habis'], ['sembunyi', 'Disembunyikan']].map(x => '<button class="pill" data-v="' + x[0] + '">' + x[1] + '</button>').join('') +
-      (isSA() ? [['', 'Semua cabang'], ['nabire', 'Nabire'], ['serui', 'Serui'], ['keduanya', 'Keduanya']].map(x => '<button class="pill" data-c="' + x[0] + '">' + I('location_on') + x[1] + '</button>').join('') : '') + '</div>' +
+      (isSA() ? [['', 'Semua lokasi']].concat(branchOpts(), [['keduanya', T('label_semua_cabang')]]).map(x => '<button class="pill" data-c="' + x[0] + '">' + I('location_on') + x[1] + '</button>').join('') : '') + '</div>' +
       (!isSA() ? '<div class="note mt12">' + I('info') + '<div>Anda dapat mengelola produk cabang <b>' + cabNama(A.user.cabang) + '</b>. Produk "Keduanya" hanya bisa diubah superadmin.</div></div>' : '') +
       '<div class="list mt12" data-list></div>';
     const q = m.querySelector('[data-q]');
@@ -384,66 +387,160 @@
     };
   }
 
-  /* ======================= TAMPILAN (urutan bagian + editor per bagian) ======================= */
+  /* ======================= TAMPILAN: Bagian · Header & Navigasi · Warna & Tema · Teks & Label ======================= */
   const GAYA_SOS = [['tombol', 'Tombol lebar'], ['bulat', 'Ikon bulat']];
-  const SEC_INFO = {
-    profil: { i: 'account_circle', d: 'Logo, nama toko, tagline, jam buka', spec: [{ k: 'nama_toko', t: 'Nama toko' }, { k: 'tagline', t: 'Tagline' }, { k: 'logo_url', t: 'Logo (kosong = logo bawaan)', type: 'image', folder: 'Logo' }, { k: 'status_buka', t: 'Teks jam buka', ph: 'Buka Hari Ini (09.00 - 21.00 WIT)' }, { k: 'warna_aksen', t: 'Warna aksen (hex)', ph: '#F9B54C', hint: 'Bawaan amber logo: #F9B54C' }] },
-    hero: { i: 'view_carousel', d: 'Foto promo yang bergeser otomatis', link: 'banner', linkT: 'Kelola Slide Hero' },
-    promo: { i: 'redeem', d: 'Kartu promo/pengumuman', spec: [{ k: 'pengumuman_aktif', t: 'Tampilkan kartu promo', type: 'switch', yaTidak: 1 }, { k: 'pengumuman_label', t: 'Label kecil' }, { k: 'pengumuman_judul', t: 'Judul' }, { k: 'pengumuman_teks', t: 'Isi', type: 'textarea', rows: 2 }] },
-    menu: { i: 'apps', d: 'Tombol Katalog, Rekening, Layanan', spec: [{ k: 'menu_katalog_sub', t: 'Keterangan tombol Katalog' }, { k: 'menu_bayar_sub', t: 'Keterangan tombol Rekening & QRIS' }, { k: 'menu_layanan_sub', t: 'Keterangan tombol Jual/Tukar/Servis' }] },
-    produk: { i: 'view_week', d: 'Slide produk acak + tombol Lihat semua', spec: [{ k: 'produk_judul', t: 'Judul slide', ph: 'Produk Pilihan' }, { k: 'produk_jumlah', t: 'Jumlah produk (4–20)', type: 'select', opts: ['4', '6', '8', '10', '12', '16', '20'] }] },
-    sosmed: { i: 'public', d: 'Tautan TikTok, Instagram, Facebook, WhatsApp', spec: [{ k: 'sosmed_gaya', t: 'Gaya tampilan', type: 'select', opts: GAYA_SOS }], link: 'cabang', linkT: 'Kelola tautan sosial media' },
-    cabang: { i: 'storefront', d: 'Alamat, jam buka, peta & WA cabang', link: 'cabang', linkT: 'Kelola data cabang' }
-  };
-  const PAGE_SPEC = [{ k: 'katalog_judul', t: 'Judul katalog', half: 1 }, { k: 'katalog_sub', t: 'Subjudul katalog', half: 1 }, { k: 'layanan_judul', t: 'Judul halaman layanan', half: 1 }, { k: 'layanan_sub', t: 'Subjudul layanan', half: 1 },
-    { k: 'jaminan', t: 'Baris jaminan (footer)', half: 1 }, { k: 'teks_footer', t: 'Teks footer', half: 1 }, { k: 'meta_deskripsi', t: 'Deskripsi untuk Google & pratinjau WhatsApp', type: 'textarea', rows: 2 }];
-  const SEC_DEF = { sosmed_gaya: 'tombol', produk_judul: 'Produk Pilihan', produk_jumlah: '10' };
+  const HIDE = 'Isi tanda - (minus) untuk menyembunyikan';
+  const vals = () => Object.assign({}, A.TXT_DEF, { sosmed_gaya: 'tombol', produk_judul: 'Produk Pilihan', produk_jumlah: '10' }, B().settings || {});
   async function saveSet(obj, btn) {
     const r = await call('saveSettings', { settings: obj }, btn);
     if (r.success) { A.admin.settings = r.data.settings; setBoot(A.admin); refreshPublic(); }
     return r;
   }
+  const TILE = k => [{ k: 'menu_' + k + '_tampil', t: 'Tampilkan tombol ini', type: 'switch', yaTidak: 1 }, { k: 'menu_' + k + '_judul', t: 'Judul tombol' }, { k: 'menu_' + k + '_sub', t: 'Keterangan' }, { k: 'menu_' + k + '_ikon', t: 'Ikon', type: 'icon' }];
+  const SEC_INFO = {
+    profil: { i: 'account_circle', d: 'Logo, nama usaha, tagline, jam buka', spec: [{ k: 'nama_toko', t: 'Nama usaha' }, { k: 'tagline', t: 'Tagline' }, { k: 'logo_url', t: 'Logo (kosong = logo bawaan)', type: 'image', folder: 'Logo' }, { k: 'status_buka', t: 'Teks jam buka', hint: HIDE }] },
+    hero: { i: 'view_carousel', d: 'Foto promo bergeser otomatis', link: 'banner', linkT: 'Kelola Slide Hero' },
+    promo: { i: 'redeem', d: 'Kartu promo / pengumuman', spec: [{ k: 'pengumuman_aktif', t: 'Tampilkan kartu promo', type: 'switch', yaTidak: 1 }, { k: 'pengumuman_label', t: 'Label kecil' }, { k: 'pengumuman_judul', t: 'Judul' }, { k: 'pengumuman_teks', t: 'Isi', type: 'textarea', rows: 2 }] },
+    menu: { i: 'apps', d: 'Tombol Katalog, Rekening, Layanan, Lokasi', spec: [{ sec: 'Tombol 1 · Katalog' }].concat(TILE('katalog'), [{ sec: 'Tombol 2 · Rekening & QRIS' }], TILE('bayar'), [{ k: 'menu_bayar_chip', t: 'Label hijau', hint: HIDE }, { sec: 'Tombol 3 · Layanan' }], TILE('layanan'), [{ sec: 'Tombol 4 · Lokasi' }], TILE('lokasi')) },
+    produk: { i: 'view_week', d: 'Slide produk acak + Lihat semua', spec: [{ k: 'produk_judul', t: 'Judul slide' }, { k: 'produk_jumlah', t: 'Jumlah produk', type: 'select', opts: ['4', '6', '8', '10', '12', '16', '20'] }, { k: 'label_promo', t: 'Label produk diskon' }, { k: 'teks_lihat_semua', t: 'Teks tombol "Lihat semua"' }] },
+    sosmed: { i: 'public', d: 'Tautan sosial media', spec: [{ k: 'sosmed_judul', t: 'Judul bagian', hint: HIDE }, { k: 'sosmed_gaya', t: 'Gaya tampilan', type: 'select', opts: GAYA_SOS }], link: 'cabang', linkT: 'Kelola tautan sosial media' },
+    cabang: { i: 'storefront', d: 'Lokasi toko & kontak WhatsApp', spec: [{ k: 'cabang_judul', t: 'Judul bagian' }, { k: 'cabang_jumlah', t: 'Jumlah lokasi di link bio', type: 'select', opts: ['1', '2', '3', '4', '6'] }, { k: 'teks_chat', t: 'Teks tombol chat', half: 1 }, { k: 'teks_maps', t: 'Teks tombol peta', half: 1 }], link: 'cabang', linkT: 'Kelola daftar lokasi' }
+  };
+  let tampTab = 'bagian';
+  VIEWS.tampilan = function (m) {
+    m.innerHTML = head('Tampilan Link Bio', '<a class="btn btn-ghost btn-sm" href="../" target="_blank">' + I('open_in_new') + 'Lihat Link Bio</a>') +
+      '<div class="tabs" role="tablist">' + [['bagian', 'Bagian Link Bio'], ['header', 'Header & Navigasi'], ['warna', 'Warna & Tema'], ['teks', 'Teks & Label']].map(t => '<button data-t="' + t[0] + '"' + (t[0] === tampTab ? ' class="on"' : '') + '>' + t[1] + '</button>').join('') + '</div><div data-tb></div>';
+    m.querySelector('.tabs').onclick = e => { const b = e.target.closest('[data-t]'); if (!b) return; tampTab = b.dataset.t; m.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b)); tab(); };
+    const tab = () => { const box = m.querySelector('[data-tb]'); ({ bagian: tabBagian, header: tabHeader, warna: tabWarna, teks: tabTeks })[tampTab](box); };
+    tab();
+  };
+  function pickIcon(cur, done) {
+    const o = A.sheet('<div class="icon-pick">' + A.ICON_SET.map(n => '<button type="button" data-ic="' + n + '"' + (n === cur ? ' class="on"' : '') + ' aria-label="' + n + '">' + I(n) + '</button>').join('') + '</div>', { title: 'Pilih ikon' });
+    o.addEventListener('click', e => { const b = e.target.closest('[data-ic]'); if (b) { o.close(); done(b.dataset.ic); } });
+  }
+  /* field ikon pada form generik */
+  function bindIconFields(root) {
+    root.querySelectorAll('[data-iconf]').forEach(b => b.onclick = () => { const inp = root.querySelector('[name="' + b.dataset.iconf + '"]'); pickIcon(inp.value, n => { inp.value = n; b.innerHTML = I(n) + '<span>Ganti ikon</span>'; }); });
+  }
   function editSection(s) {
-    const inf = SEC_INFO[s.id] || {}, vals = Object.assign({}, SEC_DEF, B().settings || {});
-    const o = A.sheet('<form class="f">' + (inf.spec ? form(inf.spec, vals) : '') +
-      (s.id === 'sosmed' ? '<div class="sos-prev" data-sp></div>' : '') +
+    const inf = SEC_INFO[s.id] || {};
+    const o = A.sheet('<form class="f">' + (inf.spec ? form(inf.spec, vals()) : '') + (s.id === 'sosmed' ? '<div class="sos-prev" data-sp></div>' : '') +
       (inf.link ? '<a class="btn btn-ghost" href="#/' + inf.link + '" data-lk>' + I('open_in_new') + esc(inf.linkT) + '</a>' : '') +
-      (inf.spec ? '<div class="row"><button type="button" class="btn btn-ghost" data-x>Batal</button><button class="btn btn-ink grow" data-save>' + I('save') + 'Simpan</button></div>' : '') + '</form>', { title: s.nama_bagian });
-    const f = o.querySelector('form'); bindUploads(f);
+      (inf.spec ? '<div class="row"><button type="button" class="btn btn-ghost" data-x>Batal</button><button class="btn btn-ink grow" data-save>' + I('save') + 'Simpan</button></div>' : '') + '</form>', { title: s.nama_bagian, lg: s.id === 'menu' });
+    const f = o.querySelector('form'); bindUploads(f); bindIconFields(f);
     const lk = o.querySelector('[data-lk]'); if (lk) lk.onclick = () => o.close();
     const sp = o.querySelector('[data-sp]');
-    const drawSp = () => { if (!sp || !A.sosmedList) return; sp.className = 'sos-prev soc-wrap ' + f.sosmed_gaya.value; sp.innerHTML = '<div class="' + (f.sosmed_gaya.value === 'bulat' ? 'socs-r' : 'socs-b') + '">' + A.sosmedList((B().socials || []).filter(x => x.aktif !== false).slice(0, 4), f.sosmed_gaya.value) + '</div>'; };
+    const drawSp = () => { if (!sp) return; sp.className = 'sos-prev soc-wrap ' + f.sosmed_gaya.value; sp.innerHTML = '<div class="' + (f.sosmed_gaya.value === 'bulat' ? 'socs-r' : 'socs-b') + '">' + A.sosmedList((B().socials || []).filter(x => x.aktif !== false).slice(0, 4), f.sosmed_gaya.value) + '</div>'; };
     if (sp) { f.sosmed_gaya.onchange = drawSp; drawSp(); }
     f.onsubmit = async e => { e.preventDefault(); const r = await saveSet(read(f, inf.spec), f.querySelector('[data-save]')); if (r.success) o.close(); };
   }
-  VIEWS.tampilan = function (m) {
+  function tabBagian(box) {
     const secs = (B().sections || []).slice();
-    m.innerHTML = head('Profil & Urutan Halaman', '<a class="btn btn-ghost btn-sm" href="../" target="_blank">' + I('open_in_new') + 'Lihat Link Bio</a>') +
-      '<div class="note">' + I('info') + '<div>Atur <b>urutan</b> bagian link bio dengan tombol ▲▼, nyalakan/matikan dengan saklar, lalu ketuk <b>Atur</b> untuk mengubah isi bagian itu.</div></div>' +
-      '<div class="panel"><div class="panel-h"><h3>Bagian Link Bio</h3><button class="btn btn-ink btn-sm" data-sv-order disabled>' + I('save') + 'Simpan Urutan</button></div><div class="order" data-order></div></div>' +
-      '<form class="panel f" data-set><div class="panel-h"><h3>Halaman lain, footer & SEO</h3></div>' + form(PAGE_SPEC, B().settings) + '<button class="btn btn-ink" style="justify-self:start" data-save>' + I('save') + 'Simpan</button></form>';
-    const box = m.querySelector('[data-order]'), sv = m.querySelector('[data-sv-order]');
+    box.innerHTML = '<div class="note">' + I('info') + '<div>Geser urutan dengan ▲▼, nyalakan/matikan dengan saklar, lalu ketuk <b>Atur</b> untuk mengubah isi bagian.</div></div>' +
+      '<div class="panel"><div class="panel-h"><h3>Bagian Link Bio</h3><button class="btn btn-ink btn-sm" data-sv-order disabled>' + I('save') + 'Simpan Urutan</button></div><div class="order" data-order></div></div>';
+    const list = box.querySelector('[data-order]'), sv = box.querySelector('[data-sv-order]');
     const dirty = () => { sv.disabled = false; sv.classList.add('btn-amber'); sv.classList.remove('btn-ink'); };
     const draw = () => {
-      box.innerHTML = secs.map((s, i) => { const inf = SEC_INFO[s.id] || {};
+      list.innerHTML = secs.map((s, i) => { const inf = SEC_INFO[s.id] || {};
         return '<div class="sec-row' + (s.tampil ? '' : ' off') + '"><span class="num">' + (i + 1) + '</span><span class="avatar-i">' + I(inf.i || 'widgets') + '</span>' +
           '<div class="grow"><b>' + esc(s.nama_bagian) + '</b><span class="muted small ell" style="display:block">' + esc(inf.d || '') + '</span></div>' +
           '<div class="acts"><button class="icon-btn" data-u="' + i + '" aria-label="Naik"' + (i ? '' : ' disabled') + '>' + I('arrow_upward') + '</button><button class="icon-btn" data-dn="' + i + '" aria-label="Turun"' + (i < secs.length - 1 ? '' : ' disabled') + '>' + I('arrow_downward') + '</button>' +
           '<label class="switch" title="Tampilkan"><input type="checkbox" data-t="' + i + '"' + (s.tampil ? ' checked' : '') + ' aria-label="Tampilkan ' + esc(s.nama_bagian) + '"><i></i></label>' +
           '<button class="btn btn-ghost btn-xs" data-ed="' + i + '">' + I('edit') + 'Atur</button></div></div>'; }).join('');
     };
-    box.onclick = e => {
+    list.onclick = e => {
       const u = e.target.closest('[data-u]'), d = e.target.closest('[data-dn]'), ed = e.target.closest('[data-ed]');
       if (u) { const i = +u.dataset.u;[secs[i - 1], secs[i]] = [secs[i], secs[i - 1]]; draw(); dirty(); }
       if (d) { const i = +d.dataset.dn;[secs[i + 1], secs[i]] = [secs[i], secs[i + 1]]; draw(); dirty(); }
       if (ed) editSection(secs[+ed.dataset.ed]);
     };
-    box.onchange = e => { const t = e.target.closest('[data-t]'); if (t) { secs[+t.dataset.t].tampil = t.checked; draw(); dirty(); } };
+    list.onchange = e => { const t = e.target.closest('[data-t]'); if (t) { secs[+t.dataset.t].tampil = t.checked; draw(); dirty(); } };
     draw();
     sv.onclick = async ev => { const r = await call('saveSections', { sections: secs.map(s => ({ id: s.id, tampil: s.tampil })) }, ev.currentTarget); if (r.success) { A.admin.sections = r.data.sections; setBoot(A.admin); refreshPublic(); sv.disabled = true; sv.classList.remove('btn-amber'); sv.classList.add('btn-ink'); } };
-    const f = m.querySelector('[data-set]');
-    f.onsubmit = async e => { e.preventDefault(); await saveSet(read(f, PAGE_SPEC), f.querySelector('[data-save]')); };
-  };
+  }
+  const HDR_SPEC = [{ k: 'header_tampil', t: 'Tampilkan header (bilah atas)', type: 'switch', yaTidak: 1 }, { k: 'header_logo_url', t: 'Logo header (kosong = logo profil)', type: 'image', folder: 'Logo' },
+    { k: 'header_nama', t: 'Nama di header', ph: 'Kosong = nama usaha' }, { k: 'header_tampil_nama', t: 'Tampilkan nama di sebelah logo', type: 'switch', yaTidak: 1 },
+    { sec: 'Tombol di header' }, { k: 'tombol_cs', t: 'Tombol chat (CS)', type: 'switch', yaTidak: 1 }, { k: 'tombol_cs_teks', t: 'Teks tombol chat' },
+    { k: 'tombol_install', t: 'Tombol Install aplikasi', type: 'switch', yaTidak: 1, hint: 'Hanya tampil bila HP pengunjung bisa memasang & belum terpasang' }, { k: 'tombol_install_teks', t: 'Teks tombol Install' },
+    { k: 'tombol_tema', t: 'Tombol mode gelap/terang', type: 'switch', yaTidak: 1 },
+    { sec: 'Navigasi' }, { k: 'navbawah_tampil', t: 'Navigasi bawah di smartphone', type: 'switch', yaTidak: 1 }, { k: 'navatas_tampil', t: 'Menu navigasi di header (desktop)', type: 'switch', yaTidak: 1 }];
+  const NAV_NAMA = { bio: 'Beranda (link bio)', katalog: 'Katalog', layanan: 'Layanan', bayar: 'Rekening & QRIS', lokasi: 'Lokasi Toko', menu: 'Menu (semua menu)' };
+  function tabHeader(box) {
+    let nav = A.navItems().map(x => Object.assign({}, x));
+    box.innerHTML = '<div class="two"><form class="panel f" data-h>' + form(HDR_SPEC, vals()) + '</form>' +
+      '<div class="panel"><div class="panel-h"><h3>Tombol navigasi</h3></div><p class="muted small" style="margin:-4px 0 10px">Ubah nama & ikon, urutkan, dan nyalakan/matikan. Di smartphone tampil maksimal 5 tombol yang aktif.</p><div data-nav></div>' +
+      '<h4 class="mt16" style="font:600 13px var(--f-body);margin-bottom:8px">Pratinjau</h4><div class="prev-phone" data-tpv></div></div></div>' +
+      '<button class="btn btn-ink mt16" data-save>' + I('save') + 'Simpan Header & Navigasi</button>';
+    const f = box.querySelector('[data-h]'), nb = box.querySelector('[data-nav]'); bindUploads(f);
+    const drawPv = () => {
+      const d = read(f, HDR_SPEC), st = vals(), on = nav.filter(x => x.tampil).slice(0, 5), lg = d.header_logo_url || st.logo_url;
+      box.querySelector('[data-tpv]').innerHTML = (d.header_tampil === 'YA' ? '<div class="ph-top"><img src="' + esc(lg ? img(lg, 80) : A.base + 'assets/logo.png') + '" alt="">' + (d.header_tampil_nama === 'YA' ? '<b style="font:800 14px var(--f-head)">' + esc(d.header_nama || st.nama_toko || 'Acc Cell') + '</b>' : '') + '<span class="right row" style="gap:4px">' +
+        (d.tombol_tema === 'YA' ? '<span class="chip">' + I('dark_mode') + '</span>' : '') + (d.tombol_install === 'YA' ? '<span class="chip chip-ink">' + esc(d.tombol_install_teks || 'Install') + '</span>' : '') + (d.tombol_cs === 'YA' ? '<span class="chip chip-ok">' + esc(d.tombol_cs_teks || 'CS') + '</span>' : '') + '</span></div>' : '<div class="ph-top muted small">Header disembunyikan</div>') +
+        '<div class="ph-body"><div class="skel" style="height:56px"></div><div class="skel" style="height:34px"></div><div class="skel" style="height:34px"></div></div>' +
+        (d.navbawah_tampil === 'YA' && on.length ? '<div class="ph-nav">' + on.map(x => '<span>' + I(x.icon) + esc(x.label) + '</span>').join('') + '</div>' : '<div class="ph-nav muted">Navigasi bawah disembunyikan</div>');
+    };
+    const drawNav = () => {
+      nb.innerHTML = nav.map((x, i) => '<div class="nav-row' + (x.tampil ? '' : ' off') + '"><button type="button" class="ico" data-ic="' + i + '" aria-label="Ganti ikon">' + I(x.icon) + '</button><div class="grow"><input class="inp" data-lb="' + i + '" value="' + esc(x.label) + '" aria-label="Nama tombol"><span class="muted tiny">' + esc(NAV_NAMA[x.id] || x.id) + '</span></div>' +
+        '<div class="acts row" style="gap:4px"><button type="button" class="icon-btn" data-u="' + i + '"' + (i ? '' : ' disabled') + ' aria-label="Naik">' + I('arrow_upward') + '</button><label class="switch"><input type="checkbox" data-t="' + i + '"' + (x.tampil ? ' checked' : '') + ' aria-label="Tampilkan"><i></i></label></div></div>').join('');
+      drawPv();
+    };
+    nb.onclick = e => { const u = e.target.closest('[data-u]'), ic = e.target.closest('[data-ic]'); if (u) { const i = +u.dataset.u;[nav[i - 1], nav[i]] = [nav[i], nav[i - 1]]; drawNav(); } if (ic) { const i = +ic.dataset.ic; pickIcon(nav[i].icon, n => { nav[i].icon = n; drawNav(); }); } };
+    nb.onchange = e => { const t = e.target.closest('[data-t]'); if (t) { nav[+t.dataset.t].tampil = t.checked; drawNav(); } };
+    nb.oninput = e => { const l = e.target.closest('[data-lb]'); if (l) { nav[+l.dataset.lb].label = l.value; drawPv(); } };
+    f.addEventListener('input', A.debounce(drawPv, 120)); f.addEventListener('change', drawPv);
+    drawNav();
+    box.querySelector('[data-save]').onclick = e => saveSet(Object.assign(read(f, HDR_SPEC), { nav_items: JSON.stringify(nav.map(x => ({ id: x.id, label: x.label.trim() || NAV_NAMA[x.id], icon: x.icon, tampil: !!x.tampil }))) }), e.currentTarget);
+  }
+  const WARNA = [['warna_aksen', 'Warna utama (tombol & aksen)'], ['warna_aksen_teks', 'Teks di atas warna utama'], ['warna_harga', 'Harga & sorotan'], ['warna_teks', 'Teks utama'], ['warna_teks2', 'Teks keterangan'],
+    ['warna_latar', 'Latar halaman'], ['warna_kartu', 'Latar kartu'], ['warna_garis', 'Garis tepi'], ['warna_header', 'Latar header'], ['warna_wa', 'Tombol WhatsApp'], ['warna_sosmed', 'Tombol sosial media']];
+  const PRESET = [['Amber (bawaan)', '#F9B54C', '#0B0B0C', '#825500'], ['Biru', '#2563EB', '#FFFFFF', '#1D4ED8'], ['Hijau', '#16A34A', '#FFFFFF', '#15803D'], ['Merah', '#DC2626', '#FFFFFF', '#B91C1C'],
+    ['Ungu', '#7C3AED', '#FFFFFF', '#6D28D9'], ['Pink', '#EC4899', '#FFFFFF', '#BE185D'], ['Oranye', '#F97316', '#FFFFFF', '#C2410C'], ['Monokrom', '#111111', '#FFFFFF', '#111111']];
+  function tabWarna(box) {
+    const v = vals();
+    box.innerHTML = '<div class="panel"><div class="panel-h"><h3>Pilihan cepat</h3></div><div class="presets">' + PRESET.map((p, i) => '<button type="button" class="preset" data-pr="' + i + '"><i style="background:' + p[1] + '"></i>' + p[0] + '</button>').join('') + '</div></div>' +
+      '<div class="two"><div class="panel"><div class="panel-h"><h3>Atur warna</h3><button type="button" class="btn btn-ghost btn-xs" data-reset>' + I('refresh') + 'Kembalikan bawaan</button></div><div class="colors-grid">' +
+      WARNA.map(w => '<label class="cpick"><input type="color" data-c="' + w[0] + '" value="' + esc(String(v[w[0]] || A.TXT_DEF[w[0]]).toLowerCase()) + '"><span>' + esc(w[1]) + '<small data-cv="' + w[0] + '">' + esc(v[w[0]] || A.TXT_DEF[w[0]]) + '</small></span></label>').join('') + '</div>' +
+      '<form class="f mt16" data-tm>' + form([{ k: 'tema_bawaan', t: 'Tema bawaan untuk pengunjung', type: 'select', opts: [['terang', 'Terang'], ['gelap', 'Gelap'], ['sistem', 'Ikuti pengaturan HP pengunjung']] }, { k: 'tombol_tema', t: 'Tampilkan tombol mode gelap di header', type: 'switch', yaTidak: 1 }], v) + '</form></div>' +
+      '<div class="panel"><h3 style="font:700 15px var(--f-head);margin-bottom:10px">Pratinjau</h3><div class="prev-phone" data-tpv></div></div></div>' +
+      '<button class="btn btn-ink mt16" data-save>' + I('save') + 'Simpan Warna & Tema</button>';
+    const pv = box.querySelector('[data-tpv]');
+    const cur = () => { const o = {}; box.querySelectorAll('[data-c]').forEach(c => { o[c.dataset.c] = c.value.toUpperCase(); }); return o; };
+    const drawPv = () => {
+      const c = cur();
+      pv.style.cssText = '--amber:' + c.warna_aksen + ';--on-amber:' + c.warna_aksen_teks + ';--amber-ink:' + c.warna_harga + ';--ink:' + c.warna_teks + ';--ink-2:' + c.warna_teks2 + ';--canvas:' + c.warna_latar + ';--surface:' + c.warna_kartu + ';--line:' + c.warna_garis + ';--hdr:' + c.warna_header + ';--wa:' + c.warna_wa + ';--sos:' + c.warna_sosmed + ';color:var(--ink)';
+      pv.innerHTML = '<div class="ph-top"><img src="' + A.base + 'assets/logo.png" alt=""><b style="font:800 14px var(--f-head)">' + esc(v.nama_toko || 'Acc Cell') + '</b><span class="right chip chip-ok">CS</span></div>' +
+        '<div class="ph-body"><div class="tile main" style="padding:12px"><span class="ic" style="width:40px;height:40px">' + I('smartphone') + '</span><span class="grow"><h3 style="font-size:14px">Katalog</h3><p>Contoh teks keterangan</p></span></div>' +
+        '<div class="pcard" style="cursor:default"><div class="pbody"><span class="pmeta">Merek • Baru</span><b class="pname">Contoh ' + esc(A.T('kata_produk')) + '</b><div class="price">Rp 1.250.000</div><span class="btn btn-wa" style="min-height:36px">' + esc(A.T('tombol_pesan')) + '</span></div></div>' +
+        '<div class="row"><span class="btn btn-amber btn-sm grow">Tombol utama</span><span class="soc-btn" style="min-height:40px;padding:6px 12px;flex:1"><b style="font-size:13px">Instagram</b></span></div></div>';
+    };
+    box.querySelectorAll('[data-c]').forEach(c => c.addEventListener('input', () => { box.querySelector('[data-cv="' + c.dataset.c + '"]').textContent = c.value.toUpperCase(); drawPv(); }));
+    box.querySelector('.presets').onclick = e => { const b = e.target.closest('[data-pr]'); if (!b) return; const p = PRESET[+b.dataset.pr]; [['warna_aksen', p[1]], ['warna_aksen_teks', p[2]], ['warna_harga', p[3]]].forEach(x => { const c = box.querySelector('[data-c="' + x[0] + '"]'); c.value = x[1].toLowerCase(); c.dispatchEvent(new Event('input')); }); };
+    box.querySelector('[data-reset]').onclick = () => { WARNA.forEach(w => { const c = box.querySelector('[data-c="' + w[0] + '"]'); c.value = A.TXT_DEF[w[0]].toLowerCase(); c.dispatchEvent(new Event('input')); }); };
+    drawPv();
+    const tm = box.querySelector('[data-tm]');
+    box.querySelector('[data-save]').onclick = e => saveSet(Object.assign(cur(), read(tm, [{ k: 'tema_bawaan' }, { k: 'tombol_tema', type: 'switch', yaTidak: 1 }])), e.currentTarget);
+  }
+  const TEKS_GRUP = [
+    ['Katalog & produk', 'smartphone', [{ k: 'katalog_judul', t: 'Judul halaman katalog' }, { k: 'katalog_sub', t: 'Subjudul katalog' }, { k: 'kata_produk', t: 'Sebutan barang', ph: 'produk / menu / layanan / unit', half: 1 }, { k: 'katalog_cari', t: 'Teks kolom cari', half: 1 },
+      { k: 'kategori_list', t: 'Daftar kategori (pisahkan dengan koma)', type: 'textarea', rows: 2, hint: 'Contoh usaha kuliner: Makanan, Minuman, Paket Hemat. Produk lama dengan kategori yang dihapus tetap tampil di "Semua" — ubah kategorinya di menu Produk.' },
+      { k: 'label_semua', t: 'Label "Semua"', half: 1 }, { k: 'label_semua_cabang', t: 'Label "Semua cabang"', half: 1 }, { k: 'label_lokasi_filter', t: 'Judul filter lokasi', half: 1 }, { k: 'label_promo', t: 'Label diskon', half: 1 },
+      { k: 'label_tersedia', t: 'Label tersedia', half: 1 }, { k: 'label_habis', t: 'Label habis', half: 1 }, { k: 'tombol_pesan', t: 'Tombol pesan', half: 1 }, { k: 'tombol_habis', t: 'Tombol saat habis', half: 1 },
+      { k: 'katalog_trust_tampil', t: 'Tampilkan kartu jaminan', type: 'switch', yaTidak: 1 }, { k: 'katalog_trust_judul', t: 'Judul kartu jaminan' }, { k: 'katalog_trust_sub', t: 'Isi kartu jaminan' },
+      { k: 'cta_tampil', t: 'Tampilkan kartu bantuan di bawah katalog', type: 'switch', yaTidak: 1 }, { k: 'cta_judul', t: 'Judul kartu bantuan' }, { k: 'cta_teks', t: 'Isi kartu bantuan', type: 'textarea', rows: 2 }]],
+    ['Detail produk & label spesifikasi', 'list_alt', [{ k: 'label_merek', t: 'Label "Merek"', half: 1, hint: HIDE }, { k: 'label_ram', t: 'Label "RAM"', half: 1, hint: HIDE }, { k: 'label_memori', t: 'Label "Memori"', half: 1, hint: HIDE }, { k: 'label_warna', t: 'Label "Warna/Varian"', half: 1, hint: HIDE },
+      { k: 'label_kondisi', t: 'Label "Kondisi"', half: 1, hint: HIDE }, { k: 'label_garansi', t: 'Label "Garansi"', half: 1, hint: HIDE }, { k: 'label_kelengkapan', t: 'Label "Kelengkapan"', half: 1, hint: HIDE }, { k: 'detail_kelengkapan_judul', t: 'Judul daftar kelengkapan', half: 1 },
+      { k: 'detail_spek_judul', t: 'Judul kotak spesifikasi', half: 1 }, { k: 'detail_tombol', t: 'Tombol pesan di detail', half: 1 }, { k: 'detail_jaminan1', t: 'Jaminan 1', half: 1, hint: HIDE }, { k: 'detail_jaminan2', t: 'Jaminan 2', half: 1, hint: HIDE },
+      { k: 'teks_pesan_wa', t: 'Pesan WhatsApp otomatis', type: 'textarea', rows: 3, hint: 'Variabel: {toko} {cabang} {produk} {varian} {warna} {harga} {kategori} {link}' }]],
+    ['Halaman rekening & QRIS', 'account_balance_wallet', [{ k: 'bayar_judul', t: 'Judul' }, { k: 'bayar_sub', t: 'Subjudul' }, { k: 'bayar_peringatan_judul', t: 'Judul peringatan' }, { k: 'catatan_pembayaran', t: 'Isi peringatan', type: 'textarea', rows: 3 }, { k: 'bayar_konfirmasi_judul', t: 'Judul konfirmasi' }, { k: 'bayar_konfirmasi_teks', t: 'Teks konfirmasi', type: 'textarea', rows: 2 }]],
+    ['Halaman layanan', 'build_circle', [{ k: 'layanan_judul', t: 'Judul' }, { k: 'layanan_sub', t: 'Subjudul' }, { k: 'layanan_tips', t: 'Kotak tips', type: 'textarea', rows: 2, hint: HIDE }]],
+    ['Halaman lokasi', 'location_on', [{ k: 'lokasi_judul', t: 'Judul' }, { k: 'lokasi_sub', t: 'Subjudul' }, { k: 'lokasi_cari', t: 'Teks kolom cari' }, { k: 'teks_chat', t: 'Teks tombol chat', half: 1 }, { k: 'teks_maps', t: 'Teks tombol peta', half: 1 }]],
+    ['Footer & SEO', 'web', [{ k: 'jaminan', t: 'Baris jaminan', hint: HIDE }, { k: 'teks_footer', t: 'Teks footer', hint: HIDE }, { k: 'meta_deskripsi', t: 'Deskripsi untuk Google & pratinjau WhatsApp', type: 'textarea', rows: 2 }]]];
+  function tabTeks(box) {
+    const v = vals();
+    box.innerHTML = '<div class="note">' + I('info') + '<div>Sesuaikan semua tulisan dengan jenis usaha Anda (toko HP, kuliner, fesyen, jasa, dll). Kosongkan kolom untuk kembali ke teks bawaan.</div></div>' +
+      TEKS_GRUP.map((g, i) => '<details class="panel acc"' + (i === 0 ? ' open' : '') + '><summary><span class="avatar-i">' + I(g[1]) + '</span><b>' + esc(g[0]) + '</b>' + I('expand_more') + '</summary><form class="f mt12" data-g="' + i + '">' + form(g[2], v) + '<button class="btn btn-ink" style="justify-self:start" data-save>' + I('save') + 'Simpan</button></form></details>').join('');
+    box.querySelectorAll('[data-g]').forEach(f => f.onsubmit = async e => { e.preventDefault(); const spec = TEKS_GRUP[+f.dataset.g][2], d = read(f, spec); Object.keys(d).forEach(k => { if (d[k] === A.TXT_DEF[k]) d[k] = ''; }); await saveSet(d, f.querySelector('[data-save]')); });
+  }
 
   /* ======================= LIST GENERIK (banner, rekening, sosmed, layanan) ======================= */
   function crudList(m, cfg) {
@@ -458,7 +555,7 @@
     };
     const save = async (rec, btn) => { const r = await call(cfg.save, rec, btn); if (r.success) { const i = rows.findIndex(x => x.id === r.data.id); if (i > -1) rows[i] = r.data; else rows.push(r.data); A.admin[cfg.key] = rows; setBoot(A.admin); draw(); refreshPublic(); } return r; };
     const edit = rec => {
-      const o = A.sheet('<form class="f">' + form(cfg.spec, rec || cfg.def || {}) + '<div class="row"><button type="button" class="btn btn-ghost" data-x>Batal</button><button class="btn btn-ink grow" data-save>' + I('save') + 'Simpan</button></div></form>', { title: rec ? 'Ubah' : (cfg.addText || 'Tambah'), lg: cfg.lg });
+      const o = A.sheet('<form class="f">' + form(cfg.spec, cfg.toForm ? cfg.toForm(rec || cfg.def || {}) : (rec || cfg.def || {})) + '<div class="row"><button type="button" class="btn btn-ghost" data-x>Batal</button><button class="btn btn-ink grow" data-save>' + I('save') + 'Simpan</button></div></form>', { title: rec ? 'Ubah' : (cfg.addText || 'Tambah'), lg: cfg.lg });
       const f = o.querySelector('form'); bindUploads(f); if (cfg.onForm) cfg.onForm(f);
       f.onsubmit = async e => { e.preventDefault(); const d = read(f, cfg.spec); if (cfg.prep) { const er = cfg.prep(d); if (er) return A.toast(er, 'err'); } const fid = f.querySelector('[data-file-id]'); if (fid) d.file_id = fid.dataset.fileId; if (rec) d.id = rec.id; const r = await save(d, f.querySelector('[data-save]')); if (r.success) o.close(); };
     };
@@ -473,17 +570,22 @@
     draw();
     if (cfg.after) cfg.after(m);
   }
-  const TUJUAN = [['katalog', 'Katalog'], ['pembayaran', 'Rekening & QRIS'], ['layanan', 'Layanan']];
+  const TUJUAN = [['katalog', 'Katalog'], ['pembayaran', 'Rekening & QRIS'], ['layanan', 'Layanan'], ['lokasi', 'Lokasi Toko']];
+  const TUJUAN_SLIDE = TUJUAN.concat([['url', 'Link manual (URL)…'], ['none', 'Tanpa link']]);
+  const modeTujuan = t => !t || t === 'none' ? 'none' : /^https?:/i.test(t) ? 'url' : t;
   VIEWS.banner = m => crudList(m, {
     title: 'Slide Hero / Timeline Promo', key: 'banners', save: 'saveBanner', del: 'deleteBanner', addText: 'Tambah Slide', order: 1, lg: 1,
     top: () => '<div class="note">' + I('info') + '<div>Slide bergeser otomatis di link bio. Gunakan gambar rasio <b>16:9</b> (mis. 1600×900).</div></div>',
-    spec: [{ k: 'gambar_url', t: 'Gambar slide', type: 'image', folder: 'Banner' }, { k: 'label', t: 'Label kecil', half: 1, ph: 'Promo Smartphone' }, { k: 'tujuan_klik', t: 'Saat diklik buka', type: 'select', opts: TUJUAN, half: 1 }, { k: 'judul', t: 'Judul' }, { k: 'subjudul', t: 'Subjudul' }],
-    item: r => '<div class="th w" style="background-image:url(\'' + esc(img(r.gambar_url, 300)) + '\')"></div><div class="grow"><b class="ell">' + esc(r.judul || '(tanpa judul)') + '</b><div class="meta">' + (r.label ? '<span class="chip chip-amber">' + esc(r.label) + '</span>' : '') + '<span>→ ' + esc(r.tujuan_klik || 'katalog') + '</span></div></div>'
+    spec: [{ k: 'gambar_url', t: 'Gambar slide', type: 'image', folder: 'Banner' }, { k: 'label', t: 'Label kecil', half: 1, ph: 'Promo Smartphone' }, { k: 'tujuan_mode', t: 'Saat diklik', type: 'select', opts: TUJUAN_SLIDE, half: 1 }, { k: 'tujuan_url', t: 'Alamat link (URL)', type: 'url', ph: 'https://…' }, { k: 'judul', t: 'Judul' }, { k: 'subjudul', t: 'Subjudul' }],
+    toForm: r => Object.assign({}, r, { tujuan_mode: r.id ? modeTujuan(r.tujuan_klik) : 'katalog', tujuan_url: /^https?:/i.test(r.tujuan_klik || '') ? r.tujuan_klik : '' }),
+    onForm: f => { const sel = f.querySelector('[name="tujuan_mode"]'), box = f.querySelector('[name="tujuan_url"]').closest('.fld'); const upd = () => { box.hidden = sel.value !== 'url'; }; sel.addEventListener('change', upd); upd(); },
+    prep: d => { const md = d.tujuan_mode; let u = String(d.tujuan_url || '').trim(); if (md === 'url') { if (!u) return 'Isi alamat link (URL).'; if (!/^https?:\/\//i.test(u)) u = 'https://' + u; d.tujuan_klik = u; } else d.tujuan_klik = md === 'none' ? 'none' : md; delete d.tujuan_mode; delete d.tujuan_url; },
+    item: r => '<div class="th w" style="background-image:url(\'' + esc(img(r.gambar_url, 300)) + '\')"></div><div class="grow"><b class="ell">' + esc(r.judul || '(tanpa judul)') + '</b><div class="meta">' + (r.label ? '<span class="chip chip-amber">' + esc(r.label) + '</span>' : '') + '<span>→ ' + esc(modeTujuan(r.tujuan_klik) === 'none' ? 'tanpa link' : r.tujuan_klik) + '</span></div></div>'
   });
   VIEWS.bayar = m => crudList(m, {
     title: 'Rekening & QRIS Resmi', key: 'payments', save: 'savePayment', del: 'deletePayment', addText: 'Tambah Rekening/QRIS', order: 1, def: { jenis: 'Bank', cabang: 'Umum' },
     top: () => '<form class="panel f" data-cat><div class="fld"><label>Peringatan keamanan di halaman rekening</label><textarea name="catatan_pembayaran" rows="3">' + esc((B().settings || {}).catatan_pembayaran || '') + '</textarea></div><button class="btn btn-ghost btn-sm" style="justify-self:start" data-save>' + I('save') + 'Simpan Peringatan</button></form>',
-    spec: [{ k: 'jenis', t: 'Jenis', type: 'select', opts: [['Bank', 'Rekening Bank'], ['QRIS', 'QRIS']], half: 1 }, { k: 'cabang', t: 'Berlaku untuk', type: 'select', opts: [['Umum', 'Semua cabang'], ['nabire', 'Nabire'], ['serui', 'Serui']], half: 1 },
+    spec: [{ k: 'jenis', t: 'Jenis', type: 'select', opts: [['Bank', 'Rekening Bank'], ['QRIS', 'QRIS']], half: 1 }, { k: 'cabang', t: 'Berlaku untuk', type: 'select', get opts() { return [['Umum', 'Semua cabang']].concat(branchOpts()); }, half: 1 },
       { k: 'nama_bank', t: 'Nama bank / judul', half: 1, ph: 'Bank Central Asia' }, { k: 'kode_bank', t: 'Kode singkat', half: 1, ph: 'BCA' }, { k: 'no_rekening', t: 'Nomor rekening', ph: 'Kosongkan untuk QRIS' },
       { k: 'atas_nama', t: 'Atas nama (A/N)' }, { k: 'gambar_qris_url', t: 'Gambar QRIS (khusus QRIS)', type: 'image', folder: 'QRIS' }, { k: 'catatan', t: 'Keterangan', ph: 'Transfer ATM / Mobile Banking' }],
     item: r => '<span class="bank-logo">' + esc(r.kode_bank || r.jenis) + '</span><div class="grow"><b class="ell">' + esc(r.nama_bank) + '</b><div class="meta"><span class="mono">' + esc(r.no_rekening || 'QRIS') + '</span><span>' + esc(r.atas_nama) + '</span>' + (r.contoh ? '<span class="chip chip-amber">Contoh</span>' : '') + '</div></div>',
@@ -512,11 +614,14 @@
   };
 
   /* ======================= CABANG & SOSMED ======================= */
-  const BR_SPEC = [{ k: 'nama', t: 'Nama cabang', half: 1 }, { k: 'nomor_wa', t: 'Nomor WhatsApp admin', half: 1, ph: '0821…' }, { k: 'alamat', t: 'Alamat', type: 'textarea', rows: 2 }, { k: 'jam_buka', t: 'Jam buka', half: 1 },
+  const BR_SPEC = [{ k: 'nama', t: 'Nama lokasi', half: 1, ph: 'Cabang Nabire' }, { k: 'kota', t: 'Nama singkat (untuk tombol)', half: 1, ph: 'Nabire' }, { k: 'nomor_wa', t: 'Nomor WhatsApp admin', ph: '0821…' }, { k: 'alamat', t: 'Alamat', type: 'textarea', rows: 2 }, { k: 'jam_buka', t: 'Jam buka', half: 1 },
     { k: 'link_maps', t: 'Link Google Maps', half: 1, ph: 'https://maps.app.goo.gl/…' }, { k: 'embed_maps', t: 'Peta mini (tempel kode embed/iframe atau URL)', type: 'textarea', rows: 2, hint: 'Google Maps → Bagikan → Sematkan peta → Salin HTML, lalu tempel di sini.' }, { k: 'aktif', t: 'Tampilkan cabang', type: 'switch' }];
   VIEWS.cabang = function (m) {
-    m.innerHTML = head('Cabang & Sosial Media') + '<div class="two">' + (B().branches || []).map(b => '<form class="panel f" data-br="' + esc(b.id) + '"><div class="panel-h"><h3>' + I('storefront') + ' ' + esc(b.nama) + '</h3></div>' + form(BR_SPEC, b) + '<button class="btn btn-ink" data-save>' + I('save') + 'Simpan ' + esc(cabNama(b.id)) + '</button></form>').join('') + '</div><div data-soc></div>';
-    m.querySelectorAll('[data-br]').forEach(f => f.onsubmit = async e => { e.preventDefault(); const d = Object.assign(read(f, BR_SPEC), { id: f.dataset.br }); const r = await call('saveBranch', d, f.querySelector('[data-save]')); if (r.success) { const i = A.admin.branches.findIndex(x => x.id === r.data.id); A.admin.branches[i] = r.data; setBoot(A.admin); refreshPublic(); } });
+    m.innerHTML = '<div data-br></div><div data-soc></div>';
+    crudList(m.querySelector('[data-br]'), { title: 'Lokasi Toko / Cabang', key: 'branches', save: 'saveBranch', del: 'deleteBranch', addText: 'Tambah Lokasi', order: 1, lg: 1,
+      top: () => '<div class="note">' + I('info') + '<div>Tambah lokasi sebanyak yang dibutuhkan. Setiap lokasi punya nomor WhatsApp admin, alamat, jam buka & peta sendiri. Bagian lokasi di link bio dan halaman <b>Lokasi</b> (dengan pencarian) mengikuti daftar ini.</div></div>',
+      spec: BR_SPEC, def: { aktif: true },
+      item: r => '<span class="avatar-i">' + I('storefront') + '</span><div class="grow"><b class="ell">' + esc(r.nama) + '</b><div class="meta"><span class="mono">' + esc(r.nomor_wa) + '</span><span class="ell">' + esc(r.alamat || '') + '</span></div></div>' });
     const gw = document.createElement('div'); gw.className = 'panel'; m.querySelector('[data-soc]').appendChild(gw);
     const gaya0 = (B().settings || {}).sosmed_gaya === 'bulat' ? 'bulat' : 'tombol';
     gw.innerHTML = '<div class="panel-h"><h3>Gaya tampilan sosial media</h3><div class="seg" data-gy>' + GAYA_SOS.map(x => '<button data-v="' + x[0] + '"' + (x[0] === gaya0 ? ' class="on"' : '') + '>' + x[1] + '</button>').join('') + '</div></div><div class="sos-prev" data-sp></div>';
@@ -565,10 +670,10 @@
         '<tr class="' + (u.aktif ? '' : 'dim') + '"><td><b>' + esc(u.nama) + '</b><div class="muted small mono">' + esc(u.username) + '</div></td><td><span class="chip ' + (u.peran === 'superadmin' ? 'chip-ink' : 'chip-amber') + '">' + (u.peran === 'superadmin' ? 'Superadmin' : 'Admin ' + cabNama(u.cabang)) + '</span>' + (u.wajib_ganti ? '<div class="tiny muted mt8">wajib ganti sandi</div>' : '') + '</td>' +
         '<td class="small">' + esc(u.no_wa || '-') + '<div class="muted">' + esc(u.email || '') + '</div></td><td class="small">' + tgl(u.login_terakhir) + '</td><td><div class="row"><button class="btn btn-ghost btn-xs" data-e="' + esc(u.id) + '">' + I('edit') + 'Ubah</button><button class="btn btn-ghost btn-xs" data-pw="' + esc(u.id) + '">' + I('lock_reset') + 'Reset</button></div></td></tr>').join('') + '</tbody></table></div>';
     const spec = isNew => [{ k: 'nama', t: 'Nama', half: 1 }, { k: 'username', t: 'Username', half: 1, ph: 'admin_nabire' }, { k: 'peran', t: 'Peran', type: 'select', opts: [['admin_cabang', 'Admin Cabang'], ['superadmin', 'Superadmin']], half: 1 },
-      { k: 'cabang', t: 'Cabang', type: 'select', opts: [['nabire', 'Nabire'], ['serui', 'Serui']], half: 1 }, { k: 'no_wa', t: 'Nomor WhatsApp', half: 1 }, { k: 'email', t: 'Email', half: 1, type: 'email' }]
+      { k: 'cabang', t: 'Cabang / lokasi', type: 'select', opts: branchOpts(), half: 1 }, { k: 'no_wa', t: 'Nomor WhatsApp', half: 1 }, { k: 'email', t: 'Email', half: 1, type: 'email' }]
       .concat(isNew ? [{ k: 'password', t: 'Sandi sementara', hint: 'Min. 8 karakter huruf+angka. Admin wajib menggantinya saat login pertama.' }] : [{ k: 'aktif', t: 'Akun aktif', type: 'switch' }]);
     const edit = u => {
-      const sp = spec(!u), o = A.sheet('<form class="f">' + form(sp, u || { peran: 'admin_cabang', cabang: 'nabire', aktif: true }) + '<div class="row"><button type="button" class="btn btn-ghost" data-x>Batal</button><button class="btn btn-ink grow" data-save>Simpan</button></div></form>', { title: u ? 'Ubah Akun' : 'Tambah Admin' });
+      const sp = spec(!u), o = A.sheet('<form class="f">' + form(sp, u || { peran: 'admin_cabang', cabang: (branchOpts()[0] || [''])[0], aktif: true }) + '<div class="row"><button type="button" class="btn btn-ghost" data-x>Batal</button><button class="btn btn-ink grow" data-save>Simpan</button></div></form>', { title: u ? 'Ubah Akun' : 'Tambah Admin' });
       const f = o.querySelector('form');
       f.onsubmit = async e => { e.preventDefault(); const d = read(f, sp); if (u) d.id = u.id; const r = await call('saveUser', d, f.querySelector('[data-save]')); if (r.success) { const i = users.findIndex(x => x.id === r.data.id); if (i > -1) users[i] = r.data; else users.push(r.data); A.admin.users = users; setBoot(A.admin); o.close(); VIEWS.pengguna(m); } };
     };
