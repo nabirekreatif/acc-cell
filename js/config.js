@@ -9,7 +9,7 @@
  *  Bila GAS_URL kosong, halaman tampil dalam MODE DEMO memakai data contoh bawaan.
  * ========================================================================== */
 window.ACC_CONFIG = {
-  GAS_URL: 'https://script.google.com/macros/s/AKfycbyMcGif04ZILPEPkC8pq7k-lzP0Q4I-H4MDT1DTT46UHXMslZwV2Rzq7xLvT5QrWElYCg/exec',                       // contoh: 'https://script.google.com/macros/s/AKfycb.../exec'
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbwpByeagmBTmRLiLYZ8WVvvnWSxR27uC4GXcMD-pm4UK49rCGp7kOkvyy7HLzRc7m6R/exec',                       // contoh: 'https://script.google.com/macros/s/AKfycb.../exec'
   NAMA_USAHA: 'Acc Cell',            // tampil di hak cipta saat template berlisensi
   FRESH_DETIK: 60                    // data publik dianggap segar selama 60 detik (tanpa panggil server)
 };
