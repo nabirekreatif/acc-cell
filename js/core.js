@@ -124,6 +124,7 @@
   };
   /* header & navigasi dibangun dari pengaturan */
   App.applyChrome = function () {
+    if (App.mode !== 'admin' && GAS_URL && !App.pub) return;       // tunggu data — jangan tampilkan header/navigasi bawaan
     const S = SET();
     const brandLogo = $('.brand img'), brandName = $('[data-brand]');
     const lg = S.header_logo_url || S.logo_url;
@@ -132,7 +133,7 @@
     if (lg) { const fi = $('link[rel=icon]'); if (fi) fi.href = img(lg, 96); }
     if (App.mode === 'admin') return;
     const top = $('.topbar'); if (top) top.hidden = !App.on_('header_tampil');
-    document.body.classList.toggle('no-header', !App.on_('header_tampil'));
+    document.body.classList.toggle('no-header', !App.on_('header_tampil')); document.documentElement.classList.toggle('no-header', !App.on_('header_tampil'));
     const cs = $('[data-cs]'); if (cs) { cs.hidden = !App.on_('tombol_cs'); cs.innerHTML = I('chat') + esc(App.T('tombol_cs_teks')); }
     const ins = $('[data-install]'); if (ins) { ins.dataset.allowed = App.on_('tombol_install') ? '1' : '0'; const sp = ins.querySelector('span:last-child'); if (sp) sp.textContent = App.T('tombol_install_teks'); App.installBtn(App._canInstall); }
     const tt = $('[data-theme-toggle]'); if (tt) tt.hidden = !App.on_('tombol_tema');
@@ -144,7 +145,7 @@
       bn.querySelector('.bnav-in').style.gridTemplateColumns = 'repeat(' + Math.max(1, bi.length) + ', 1fr)';
       bn.querySelector('.bnav-in').innerHTML = bi.map(x => link(x)).join('');
       bn.dataset.off = (!App.on_('navbawah_tampil') || !bi.length) ? '1' : '0';
-      document.body.classList.toggle('no-bnav', bn.dataset.off === '1');
+      document.body.classList.toggle('no-bnav', bn.dataset.off === '1'); document.documentElement.classList.toggle('no-bnav', bn.dataset.off === '1');
     }
     $$('[data-nav]').forEach(a => a.classList.toggle('on', a.dataset.nav === (App.pages[App.cur] && App.pages[App.cur].nav || App.cur)));
   };
@@ -203,8 +204,10 @@
     const c = Store.get('pub', null);
     if (c && !App.pub) setPub(c.data, true);
     const fresh = (Number(CFG.FRESH_DETIK) || 60) * 1000;
-    if (c && !force && Date.now() - c.t < fresh) return;
-    const r = await App.getPublic();
+    const early = window.__accPub; window.__accPub = null;          // permintaan yang sudah dimulai di <head>
+    if (!early && c && !force && Date.now() - c.t < fresh) return;
+    let r = early ? await early : null;
+    if (!r || !r.success) r = await App.getPublic();
     if (r && r.success) {
       const h = hashStr(JSON.stringify(r.data));
       Store.set('pub', { t: Date.now(), h, data: r.data });
@@ -215,9 +218,15 @@
     }
   };
   function setPub(d, fromCache) {
+    const first = !App.pub, chrome0 = chromeKey();
     App.pub = d; App.pubError = '';
     const s = (d && d.settings) || {};
+    const de = document.documentElement, wasBoot = de.classList.contains('boot');
+    // tampilan pertama / header-navigasi berubah → ganti elemen halaman sekaligus agar tidak dihitung "lompatan" (CLS)
+    if (App.mode !== 'admin' && (wasBoot || (!first && chromeKey() !== chrome0))) $$('#app > .page').forEach(p => p.remove());
+    de.classList.remove('boot');
     App.setTheme(); App.applyChrome();
+    if (App.mode !== 'admin' && GAS_URL) saveBoot();
     if (s.meta_deskripsi) { const m = $('meta[name=description]'); if (m) m.setAttribute('content', s.meta_deskripsi); }
     App.rerender();
     if (!fromCache || !GAS_URL) App.emit('pub');
@@ -230,6 +239,16 @@
     if (c && c.data && c.t) { if (A_hash(c.data) !== A_hash(App.pub)) setPub(c.data, true); } else if (c) App.loadPublic(true);
   });
   const A_hash = d => hashStr(JSON.stringify(d || null));
+  function chromeKey() { return App.pub ? [App.on_('header_tampil'), App.on_('navbawah_tampil'), App.T('nav_items')].join('|') : ''; }
+  /* snapshot kecil untuk dipasang di <head> sebelum halaman tergambar (warna, tema, header/navigasi, gambar slide pertama) */
+  function saveBoot() {
+    try {
+      const st = document.getElementById('theme-vars'), b0 = (App.pub.banners || [])[0];
+      Store.set('boot', { css: st ? st.textContent : '', def: App.T('tema_bawaan'), tt: App.on_('tombol_tema') ? 1 : 0, nh: App.on_('header_tampil') ? 0 : 1, nb: App.on_('navbawah_tampil') ? 0 : 1,
+        hero: b0 && (App.pub.sections || []).some(x => x.id === 'hero' && x.tampil !== false) ? img(b0.gambar_url, heroW()) : '' });
+    } catch (e) { }
+  }
+  const heroW = App.heroW = () => (window.innerWidth || 400) > 600 ? 960 : 720;
   /* ---------------- event kecil ---------------- */
   const ev = {};
   App.on = (n, f) => (ev[n] = ev[n] || []).push(f);
@@ -346,7 +365,7 @@
     opt = opt || {};
     const list = App.branches();
     if (list.length === 1) return App.openWa(list[0].id, msg, opt.track);
-    const o = App.sheet('<p class="muted" style="margin:-4px 0 12px">' + esc(opt.sub || 'Pilih cabang Acc Cell yang ingin Anda hubungi:') + '</p><div class="list">' +
+    const o = App.sheet('<p class="muted" style="margin:-4px 0 12px">' + esc(opt.sub || 'Pilih cabang ' + (SET().nama_toko || '') + ' yang ingin Anda hubungi:') + '</p><div class="list">' +
       list.map(b => '<button class="li" data-b="' + esc(b.id) + '" style="text-align:left;width:100%"><span class="avatar-i" style="background:#E7F9EE;color:#1DA851">' + I('chat', 'fill') + '</span><span class="grow"><b>' + esc(b.nama) + '</b><span class="meta">' + esc(hp08(b.nomor_wa)) + ' · ' + esc(b.jam_buka || '') + '</span></span>' + I('chevron_right') + '</button>').join('') + '</div>',
       { title: opt.title || 'Chat Admin WhatsApp' });
     o.addEventListener('click', e => { const t = e.target.closest('[data-b]'); if (t) { o.close(); App.openWa(t.dataset.b, msg, opt.track); } });
@@ -426,14 +445,15 @@
 
   /* ---------------- mulai ---------------- */
   App.start = function () {
-    const c0 = Store.get('pub', null); if (c0 && c0.data && App.mode !== 'admin') App.pub = App.pub || null;
+    const c0 = Store.get('pub', null);
+    if (App.mode !== 'admin' && GAS_URL && c0 && c0.data && !App.pub) { App.pub = c0.data; document.documentElement.classList.remove('boot'); }
     App.setTheme(); App.applyChrome();
     document.addEventListener('click', e => { if (e.target.closest('[data-theme-toggle]')) { App.setTheme(App.theme() === 'gelap' ? 'terang' : 'gelap'); } });
     if (window.matchMedia) { const mq = matchMedia('(prefers-color-scheme: dark)'); if (mq.addEventListener) mq.addEventListener('change', () => App.setTheme()); }
     window.addEventListener('hashchange', route);
     route();
     App.loadPublic();
-    App.warmUp();
+    if (App.mode === 'admin') App.warmUp();                       // publik: data sudah diminta sejak <head>, tidak perlu ping tambahan
     if (App.mode !== 'admin') App.track('kunjungan');
     if (Store.ss('visit') !== '1') { Store.ss('visit', '1'); }
     noZoom();

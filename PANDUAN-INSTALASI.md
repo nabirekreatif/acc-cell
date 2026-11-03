@@ -132,6 +132,9 @@ Buka **Cabang & Sosmed** → **Tambah**. Nama dan nomor WA wajib diisi; alamat, 
 
 Di link bio, bagian Lokasi menampilkan beberapa cabang beserta tombol **Lihat semua**. Tombol ini membuka halaman **Lokasi Toko** berisi semua cabang dan **kolom pencarian** (bisa mencari berdasarkan nama, kota, atau alamat).
 
+### Halaman Layanan
+Menu **Halaman Layanan** → **Tambah Layanan**: isi judul, pilih ikon, deskripsi, dan pesan WhatsApp otomatis (`{cabang}` diganti nama cabang). Layanan bisa diurutkan (▲), disembunyikan, atau dihapus. Judul, subjudul, dan kotak tips halaman diatur di bagian bawah menu yang sama.
+
 ### Slide Hero & Pop-up: dengan atau tanpa link
 Saat mengedit slide, pilih **Tujuan saat diklik**: halaman di situs (Katalog / Rekening / Layanan / Lokasi), **Link manual (URL)** (misalnya `https://...`, terbuka di tab baru), atau **Tanpa link** (slide hanya gambar).
 
@@ -206,12 +209,20 @@ Dasbor → **Migrasi Data** → tempel URL spreadsheet lama → pilih data → *
 
 ---
 
-## Update dari versi sebelumnya (v3 → v4)
+## Update dari versi sebelumnya
 
-1. Di Apps Script, ganti isi **Kode.gs**, **Notifikasi.gs**, dan **Migrasi.gs** dengan berkas baru (CRM.gs tidak berubah).
-2. Jalankan **`setupAplikasi()`** sekali. Fungsi ini aman diulang: hanya menambah kolom baru `kota` di sheet Cabang dan pengaturan baru, tanpa menghapus data.
-3. **Deploy → Kelola deployment → Edit → Versi baru → Deploy** (URL tetap sama).
-4. Timpa semua berkas frontend dengan isi ZIP baru (tetap pakai `js/config.js` lama yang sudah berisi URL), lalu `git add .` → `git commit -m "v4"` → `git push`. Buka situs dan tekan **Ctrl+Shift+R**.
+**v4 → v5** (performa, Layanan bisa ditambah, Migrasi rapi):
+1. Di Apps Script, ganti isi **Kode.gs** saja (berkas lain tidak berubah), lalu **Deploy → Kelola deployment → Edit → Versi baru → Deploy**.
+2. Timpa berkas frontend dengan isi ZIP baru (tetap pakai `js/config.js` lama yang berisi URL), lalu `git add .` → `git commit -m "v5"` → `git push`. Buka situs dan tekan **Ctrl+Shift+R**.
+
+**v3 → v4**: ganti **Kode.gs**, **Notifikasi.gs**, **Migrasi.gs**, jalankan `setupAplikasi()` sekali (aman, hanya menambah kolom `kota`), lalu deploy **Versi baru**.
+
+## Kecepatan & PageSpeed
+
+- Pengunjung yang **pernah membuka** link bio langsung melihat tampilan terakhir (warna, header/navigasi, isi), lalu data terbaru dicek di latar. Hasil edit dasbor tampil begitu data terbaru datang (±1–3 detik), tanpa tampilan bawaan muncul lebih dulu.
+- Pengunjung **pertama kali** melihat kerangka abu-abu netral sampai data dari Apps Script datang. Header/navigasi bawaan tidak lagi ditampilkan lalu dihilangkan, sehingga halaman tidak "melompat".
+- Batas yang tersisa: kunjungan pertama tetap menunggu jawaban Apps Script (biasanya 1–3 detik, lebih lama bila server baru "bangun"). Ini sifat layanan gratis Google, bukan kode template.
+- Nilai PageSpeed bervariasi tiap pengujian. Uji 2–3 kali dan lihat rata-ratanya.
 
 ## Pemecahan masalah
 
@@ -223,6 +234,7 @@ Dasbor → **Migrasi Data** → tempel URL spreadsheet lama → pilih data → *
 | Login terkunci 15 menit | Lima kali salah sandi. Tunggu, atau superadmin melakukan reset. |
 | Gambar gagal diunggah | Kebijakan Google Workspace melarang berbagi publik. Minta admin Workspace mengizinkan berbagi "Siapa saja yang memiliki link". |
 | WA tidak terkirim | Cek token dan status perangkat Fonnte (harus `connect`), lihat tab **Antrean**, lalu jalankan `pasangTrigger()`. |
+| Tampilan lama sempat muncul sebentar | Normal bagi pengunjung yang pernah berkunjung: tampilan terakhir ditampilkan seketika lalu diperbarui. Pastikan frontend sudah versi v5. |
 | Warna/teks baru belum tampil | Tunggu ±1 menit atau muat ulang halaman. Pastikan backend sudah *Versi baru* v4. |
 | Halaman terkunci "Template tidak berlisensi" | Ada berkas tersegel yang diubah, atau hosting mengubah berkas. Unggah ulang berkas asli. |
 

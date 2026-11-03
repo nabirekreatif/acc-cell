@@ -556,7 +556,7 @@
     const save = async (rec, btn) => { const r = await call(cfg.save, rec, btn); if (r.success) { const i = rows.findIndex(x => x.id === r.data.id); if (i > -1) rows[i] = r.data; else rows.push(r.data); A.admin[cfg.key] = rows; setBoot(A.admin); draw(); refreshPublic(); } return r; };
     const edit = rec => {
       const o = A.sheet('<form class="f">' + form(cfg.spec, cfg.toForm ? cfg.toForm(rec || cfg.def || {}) : (rec || cfg.def || {})) + '<div class="row"><button type="button" class="btn btn-ghost" data-x>Batal</button><button class="btn btn-ink grow" data-save>' + I('save') + 'Simpan</button></div></form>', { title: rec ? 'Ubah' : (cfg.addText || 'Tambah'), lg: cfg.lg });
-      const f = o.querySelector('form'); bindUploads(f); if (cfg.onForm) cfg.onForm(f);
+      const f = o.querySelector('form'); bindUploads(f); bindIconFields(f); if (cfg.onForm) cfg.onForm(f);
       f.onsubmit = async e => { e.preventDefault(); const d = read(f, cfg.spec); if (cfg.prep) { const er = cfg.prep(d); if (er) return A.toast(er, 'err'); } const fid = f.querySelector('[data-file-id]'); if (fid) d.file_id = fid.dataset.fileId; if (rec) d.id = rec.id; const r = await save(d, f.querySelector('[data-save]')); if (r.success) o.close(); };
     };
     box.onclick = async e => {
@@ -591,11 +591,20 @@
     item: r => '<span class="bank-logo">' + esc(r.kode_bank || r.jenis) + '</span><div class="grow"><b class="ell">' + esc(r.nama_bank) + '</b><div class="meta"><span class="mono">' + esc(r.no_rekening || 'QRIS') + '</span><span>' + esc(r.atas_nama) + '</span>' + (r.contoh ? '<span class="chip chip-amber">Contoh</span>' : '') + '</div></div>',
     after: m => { const f = m.querySelector('[data-cat]'); f.onsubmit = async e => { e.preventDefault(); const r = await call('saveSettings', { settings: { catatan_pembayaran: f.catatan_pembayaran.value } }, f.querySelector('[data-save]')); if (r.success) { A.admin.settings = r.data.settings; setBoot(A.admin); refreshPublic(); } }; }
   });
-  VIEWS.layanan = m => crudList(m, {
-    title: 'Halaman Layanan', key: 'services', save: 'saveService', del: 'deleteService', addText: 'Tambah', noDel: 1, noAdd: 1,
-    spec: [{ k: 'judul', t: 'Judul', half: 1 }, { k: 'ikon', t: 'Ikon', type: 'select', half: 1, opts: [['build_circle', 'Servis'], ['sell', 'Jual'], ['swap_horizontal_circle', 'Tukar tambah'], ['smartphone', 'HP'], ['support_agent', 'Konsultasi']] }, { k: 'deskripsi', t: 'Deskripsi', type: 'textarea' }, { k: 'template_wa', t: 'Template pesan WhatsApp', type: 'textarea', hint: '{cabang} otomatis diganti Nabire/Serui.' }],
-    item: r => '<span class="avatar-i">' + I(r.ikon || 'build_circle') + '</span><div class="grow"><b>' + esc(r.judul) + '</b><div class="meta ell">' + esc(r.deskripsi) + '</div></div>'
-  });
+  const LY_TEKS = [{ k: 'layanan_judul', t: 'Judul halaman' }, { k: 'layanan_sub', t: 'Subjudul' }, { k: 'layanan_tips', t: 'Kotak tips di bawah daftar', type: 'textarea', rows: 2, hint: HIDE }];
+  VIEWS.layanan = function (m) {
+    m.innerHTML = '<div data-ly></div><form class="panel f mt16" data-lyt><h3 style="font:700 15px var(--f-head)">Teks halaman layanan</h3>' + form(LY_TEKS, vals()) + '<button class="btn btn-ink" style="justify-self:start" data-save>' + I('save') + 'Simpan teks</button></form>';
+    crudList(m.querySelector('[data-ly]'), {
+      title: 'Halaman Layanan', key: 'services', save: 'saveService', del: 'deleteService', addText: 'Tambah Layanan', order: 1, lg: 1, def: { aktif: true, ikon: 'build_circle' },
+      top: () => '<div class="note">' + I('info') + '<div>Tambah layanan sesuai usaha Anda (servis, pengiriman, reservasi, konsultasi, dll). Setiap layanan punya tombol WhatsApp dengan pesan otomatis. Urutkan dengan ▲.</div></div>',
+      spec: [{ k: 'judul', t: 'Judul layanan', ph: 'Contoh: Servis HP' }, { k: 'ikon', t: 'Ikon', type: 'icon' }, { k: 'deskripsi', t: 'Deskripsi', type: 'textarea', rows: 3 },
+        { k: 'template_wa', t: 'Pesan WhatsApp otomatis', type: 'textarea', rows: 3, hint: '{cabang} otomatis diganti nama cabang yang dipilih pengunjung.', ph: 'Halo Admin {cabang}, saya ingin bertanya tentang …' },
+        { k: 'aktif', t: 'Tampilkan di halaman layanan', type: 'switch' }],
+      item: r => '<span class="avatar-i">' + I(r.ikon || 'build_circle') + '</span><div class="grow"><b class="ell">' + esc(r.judul) + (r.aktif === false ? ' <span class="chip chip-no">Disembunyikan</span>' : '') + '</b><div class="meta ell">' + esc(r.deskripsi || '') + '</div></div>'
+    });
+    const f = m.querySelector('[data-lyt]');
+    f.onsubmit = async e => { e.preventDefault(); const d = read(f, LY_TEKS); Object.keys(d).forEach(k => { if (d[k] === A.TXT_DEF[k]) d[k] = ''; }); await saveSet(d, f.querySelector('[data-save]')); };
+  };
 
   /* ======================= POP-UP ======================= */
   const POP_SPEC = [{ k: 'popup_aktif', t: 'Pop-up promo AKTIF', type: 'switch', yaTidak: 1, hint: 'Muncul saat pengunjung membuka link bio.' }, { k: 'popup_gambar', t: 'Gambar pop-up (kosong = slide pertama)', type: 'image', folder: 'Popup' },
@@ -931,9 +940,9 @@
     const SH = [['Produk', 'Produk', 1], ['Banner', 'Slide/Banner', 1], ['Pembayaran', 'Rekening & QRIS', 1], ['Cabang', 'Cabang', 1], ['Sosmed', 'Sosial media', 1], ['Layanan', 'Layanan', 1], ['CRM_Kontak', 'Kontak CRM', 1], ['Pengaturan', 'Pengaturan', 1], ['Statistik', 'Statistik', 0]];
     m.innerHTML = head('Migrasi Data') + '<div class="note">' + I('info') + '<div>Pindahkan data dari spreadsheet <b>app/katalog lama</b>. Sumber hanya <b>dibaca</b>. Kolom dikenali dari nama header (mis. "Nama Produk", "Harga Jual", "Lokasi"). Import ulang aman (tidak dobel) — jalankan lagi tepat sebelum pindah untuk menangkap data terbaru. Gunakan akun Google yang sama agar foto Drive lama tetap tampil.</div></div>' +
       '<div class="two"><div class="panel f"><h3 style="font:700 16px var(--f-head)">Dari spreadsheet lama</h3><div class="fld"><label>URL / ID spreadsheet lama</label><input data-src placeholder="https://docs.google.com/spreadsheets/d/…"></div>' +
-      '<div class="fld"><span>Data yang diimpor</span><div class="row wrap">' + SH.map(s => '<label class="chip" style="height:32px;cursor:pointer"><input type="checkbox" data-sh="' + s[0] + '"' + (s[2] ? ' checked' : '') + '> ' + s[1] + '</label>').join('') + '</div></div>' +
-      '<label class="row small"><input type="checkbox" data-timpa> Timpa data yang sudah ada (bawaan: hanya menambah yang baru)</label><div class="row"><button class="btn btn-ghost grow" data-scan>' + I('search') + 'Pindai (Dry-run)</button><button class="btn btn-ink grow" data-run>' + I('move_up') + 'Jalankan Import</button></div></div>' +
-      '<div class="panel f"><h3 style="font:700 16px var(--f-head)">Import produk dari CSV</h3><p class="muted small" style="margin:0">Cocok untuk ekspor dari Excel/marketplace. Kolom minimal: <b>nama, harga</b>. Opsional: merek, kategori, ram, memori, warna, kondisi, kelengkapan, garansi, status, cabang, foto, deskripsi.</p><button class="btn btn-ghost btn-sm" style="justify-self:start" data-tpl>' + I('download') + 'Unduh template CSV</button><input type="file" accept=".csv,text/csv" class="inp" data-csv><div class="small muted" data-cpv></div><div class="row"><button class="btn btn-ghost grow" data-cscan disabled>Pindai</button><button class="btn btn-ink grow" data-crun disabled>Import CSV</button></div></div></div><div data-res></div>';
+      '<div class="fld"><span>Data yang diimpor</span><div class="pick-grid">' + SH.map(s => '<label class="pick"><input type="checkbox" data-sh="' + s[0] + '"' + (s[2] ? ' checked' : '') + '><span>' + s[1] + '</span></label>').join('') + '</div></div>' +
+      '<label class="pick pick-line"><input type="checkbox" data-timpa><span>Timpa data yang sudah ada <small class="muted">(bawaan: hanya menambah yang baru)</small></span></label><div class="row"><button class="btn btn-ghost grow" data-scan>' + I('search') + 'Pindai (Dry-run)</button><button class="btn btn-ink grow" data-run>' + I('move_up') + 'Jalankan Import</button></div></div>' +
+      '<div class="panel f"><h3 style="font:700 16px var(--f-head)">Import produk dari CSV</h3><p class="muted small" style="margin:0">Cocok untuk ekspor dari Excel/marketplace. Kolom minimal: <b>nama, harga</b>. Opsional: merek, kategori, ram, memori, warna, kondisi, kelengkapan, garansi, status, cabang, foto, deskripsi.</p><button class="btn btn-ghost btn-sm" style="justify-self:start" data-tpl>' + I('download') + 'Unduh template CSV</button><label class="filepick"><input type="file" accept=".csv,text/csv" data-csv>' + I('upload_file') + '<span data-cfn>Pilih file CSV…</span></label><div class="small muted" data-cpv></div><div class="row"><button class="btn btn-ghost grow" data-cscan disabled>Pindai</button><button class="btn btn-ink grow" data-crun disabled>Import CSV</button></div></div></div><div data-res></div>';
     const q = s => m.querySelector(s); let csv = [];
     const show = (r) => {
       const d = r.data, rep = d.report;
@@ -949,7 +958,7 @@
     };
     q('[data-scan]').onclick = e => run(true, e.currentTarget); q('[data-run]').onclick = e => run(false, e.currentTarget);
     q('[data-tpl]').onclick = () => downloadCsv('template-produk.csv', [['nama', 'merek', 'kategori', 'harga', 'harga_coret', 'ram', 'memori', 'warna', 'kondisi', 'kelengkapan', 'garansi', 'status', 'cabang', 'foto', 'deskripsi'], ['Samsung Galaxy A15 6/128GB', 'Samsung', 'HP Baru', '2499000', '2699000', '6 GB', '128 GB', 'Hitam, Biru', 'Baru Segel', 'Fullset dus', 'Resmi 1 Tahun', 'Tersedia', 'Nabire', 'https://…jpg', 'Layar AMOLED 90Hz']]);
-    q('[data-csv]').onchange = async e => { csv = csvObjects(await e.target.files[0].text()); q('[data-cpv]').textContent = csv.length + ' baris terbaca.'; q('[data-cscan]').disabled = q('[data-crun]').disabled = !csv.length; };
+    q('[data-csv]').onchange = async e => { if (!e.target.files[0]) return; q('[data-cfn]').textContent = e.target.files[0].name; csv = csvObjects(await e.target.files[0].text()); q('[data-cpv]').textContent = csv.length + ' baris terbaca.'; q('[data-cscan]').disabled = q('[data-crun]').disabled = !csv.length; };
     const runCsv = async (dry, btn) => { const r = await call('migrasi.csvProduk', { rows: csv, dryRun: dry, timpa: q('[data-timpa]').checked }, btn, { label: '…' }); if (r.success) { show(r); if (!dry) { loadBoot(true); refreshPublic(); } } };
     q('[data-cscan]').onclick = e => runCsv(true, e.currentTarget); q('[data-crun]').onclick = e => runCsv(false, e.currentTarget);
   };

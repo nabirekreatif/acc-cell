@@ -53,7 +53,7 @@
       const b = A.pub.banners || []; if (!b.length) return '';
       return '<div class="hero" data-hero><div class="hero-track">' + b.map((x, i) =>
         (tujuan(x.tujuan_klik) ? '<a class="slide" href="' + esc(tujuan(x.tujuan_klik)) + '"' + (/^https?:/.test(tujuan(x.tujuan_klik)) ? ' target="_blank" rel="noopener"' : '') + '>' : '<div class="slide nolink">') +
-        '<img src="' + esc(img(x.gambar_url, 960)) + '" alt="' + esc(x.judul || 'Promo') + '"' + (i ? ' loading="lazy"' : ' fetchpriority="high"') + '>' +
+        '<img src="' + esc(img(x.gambar_url, A.heroW())) + '" alt="' + esc(x.judul || 'Promo') + '"' + (i ? ' loading="lazy"' : ' fetchpriority="high"') + '>' +
         '<div class="slide-cap">' + (x.label ? '<span class="chip">' + esc(x.label) + '</span>' : '') + (x.judul ? '<h3>' + esc(x.judul) + '</h3>' : '') + (x.subjudul ? '<p>' + esc(x.subjudul) + '</p>' : '') + '</div>' + (tujuan(x.tujuan_klik) ? '</a>' : '</div>')).join('') +
         '</div>' + (b.length > 1 ? '<div class="dots">' + b.map((_, i) => '<i' + (i ? '' : ' class="on"') + '></i>').join('') + '</div>' : '') + '</div>';
     },
@@ -448,16 +448,19 @@
     nav: 'layanan', title: () => T('layanan_judul') || S().layanan_judul || 'Layanan',
     render(el, param, rr, changed) {
       if (!ready(el)) return;
-      const svc = A.pub.services || [];
+      const svc = (A.pub.services || []).filter(x => x.aktif !== false), brs = A.branches(), many = brs.length > 3;
       el.innerHTML = '<div class="col"><a class="back" href="#/">' + I('arrow_back') + 'Kembali ke Link Bio</a>' +
-        '<h1 class="kat-title">' + esc(S().layanan_judul || 'Layanan') + '</h1><p class="muted" style="margin:0">' + esc(S().layanan_sub || '') + '</p>' +
-        svc.map(s => '<div class="card svc"><span class="ic">' + I(s.ikon || 'build_circle') + '</span><h3>' + esc(s.judul) + '</h3><p>' + esc(s.deskripsi) + '</p>' +
-          '<div class="acts">' + A.branches().map(b => '<button class="btn btn-wa btn-sm" data-svc="' + esc(s.id) + '" data-b="' + esc(b.id) + '">' + I('chat', 'fill') + esc(cabNama(b.id)) + '</button>').join('') + '</div></div>').join('') +
+        '<h1 class="kat-title">' + esc(T('layanan_judul') || 'Layanan') + '</h1>' + (T('layanan_sub') ? '<p class="muted" style="margin:0">' + esc(T('layanan_sub')) + '</p>' : '') +
+        (svc.length ? svc.map(s => '<div class="card svc"><span class="ic">' + I(s.ikon || 'build_circle') + '</span><h3>' + esc(s.judul) + '</h3>' + (s.deskripsi ? '<p>' + esc(s.deskripsi) + '</p>' : '') +
+          '<div class="acts">' + (many ? '<button class="btn btn-wa btn-sm" data-svc="' + esc(s.id) + '">' + I('chat', 'fill') + esc(T('teks_chat')) + '</button>'
+            : brs.map(b => '<button class="btn btn-wa btn-sm" data-svc="' + esc(s.id) + '" data-b="' + esc(b.id) + '">' + I('chat', 'fill') + esc(cabNama(b.id)) + '</button>').join('')) + '</div></div>').join('')
+          : '<div class="empty mt16">' + I('inbox') + '<p>Belum ada layanan.</p></div>') +
         (T('layanan_tips') ? '<div class="note mt16">' + I('lightbulb') + '<div>' + esc(T('layanan_tips')) + '</div></div>' : '') +
         '</div>';
+      const pesan = (s, br) => String(s.template_wa || ('Halo Admin ' + toko() + ' {cabang}, saya ingin bertanya tentang ' + s.judul + '.')).replace(/\{cabang\}/g, cabNama(br.id));
       el.querySelectorAll('[data-svc]').forEach(b => b.onclick = () => {
         const s = svc.find(x => x.id === b.dataset.svc);
-        A.openWa(b.dataset.b, br => String(s.template_wa || ('Halo Admin ' + toko() + ' {cabang}, saya ingin ' + s.judul)).replace(/\{cabang\}/g, cabNama(br.id)));
+        if (b.dataset.b) A.openWa(b.dataset.b, br => pesan(s, br)); else A.pickBranch(br => pesan(s, br));
       });
       if (changed) A.track('buka_layanan');
     }
